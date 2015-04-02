@@ -2,7 +2,7 @@
 
 <project>
   <fileVersion>2</fileVersion>
-  <fileChecksum>1454717963</fileChecksum>
+  <fileChecksum>1354302498</fileChecksum>
   <configuration>
     <name>Aircopter_V1_Demo_Poj Configuration</name>
     <outputs>
@@ -188,6 +188,43 @@
       <file>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Inc\stm32f3xx_hal_pwr.h</file>
       <file>$PROJ_DIR$\..\Drivers\CMSIS\Device\ST\STM32F3xx\Include\system_stm32f3xx.h</file>
       <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\timers.pbi</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\i2c2_sensors.o</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\algorithm_moveAve.o</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\algorithm_matrix.o</file>
+      <file>$TOOLKIT_DIR$\inc\c\xtgmath.h</file>
+      <file>$PROJ_DIR$\..\Src\Algorithm\algorithm_matrix.h</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\algorithm_ahrs.o</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\algorithm_ahrs.pbi</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\algorithm_kalman.pbi</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\algorithm_moveAve.pbi</file>
+      <file>$PROJ_DIR$\..\Drivers\CMSIS\Include\arm_math.h</file>
+      <file>$PROJ_DIR$\..\Src\Algorithm\algorithm_kalman.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\math.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ymath.h</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\usart3_ble.o</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\algorithm_matrix.pbi</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\usart3_ble.pbi</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\algorithm_kalman.o</file>
+      <file>$PROJ_DIR$\..\Src\Algorithm\algorithm_moveAve.h</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\i2c2_sensors.pbi</file>
+      <file>$PROJ_DIR$\..\Inc\algorithm_ahrs.h</file>
+      <file>$PROJ_DIR$\..\Inc\algorithm_pid.h</file>
+      <file>$PROJ_DIR$\..\Src\Algorithm\algorithm_kalman.c</file>
+      <file>$PROJ_DIR$\..\Src\Algorithm\algorithm_moveAve.c</file>
+      <file>$PROJ_DIR$\..\Src\Algorithm\algorithm_ahrs.c</file>
+      <file>$PROJ_DIR$\..\Src\Algorithm\algorithm_matrix.c</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\algorithm_pid.pbi</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\algorithm_pid.o</file>
+      <file>$PROJ_DIR$\..\Inc\algorithm_matrix.h</file>
+      <file>$TOOLKIT_DIR$\CMSIS\Lib\IAR\iar_cortexM4lf_math.a</file>
+      <file>$PROJ_DIR$\..\Inc\algorithm_kalman.h</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\tim2_motor.pbi</file>
+      <file>$PROJ_DIR$\..\Inc\algorithm_moveAve.h</file>
+      <file>$PROJ_DIR$\Aircopter_V1_Demo_Poj Configuration\Obj\tim2_motor.o</file>
+      <file>$PROJ_DIR$\..\Src\Peripherals\usart3_ble.c</file>
+      <file>$PROJ_DIR$\..\Src\Peripherals\i2c2_sensors.c</file>
+      <file>$PROJ_DIR$\..\Src\Algorithm\algorithm_pid.c</file>
+      <file>$PROJ_DIR$\..\Src\Peripherals\tim2_motor.c</file>
     </outputs>
     <file>
       <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_dma.c</name>
@@ -570,6 +607,10 @@
         </tool>
       </outputs>
       <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 115 141 161 150 133 114 159 148 129 87 174 167 36 48 154 49 35 55</file>
+        </tool>
         <tool>
           <name>ICCARM</name>
           <file> 115 141 161 150 133 114 159 148 129 87 174 167 36 48 154 49 35 55</file>
@@ -979,7 +1020,7 @@
       <inputs>
         <tool>
           <name>ILINK</name>
-          <file> 81 29 102 146 44 31 93 91 75 130 106 144 136 100 134 26 117 153 137 124 73 143 98 162 109 58 111 59 27 110 57 104 172 138 62 79 128 84 156 170 131</file>
+          <file> 81 187 198 184 183 208 29 102 146 44 31 93 91 182 75 130 106 144 136 100 134 26 117 153 137 124 73 143 98 162 109 58 111 59 27 110 57 104 172 138 62 79 128 195 210 84 156 170 131</file>
         </tool>
       </inputs>
     </file>
@@ -1038,6 +1079,164 @@
         </tool>
       </outputs>
     </file>
+    <file>
+      <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_kalman.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 189</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 198</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 211 48 141 161 150 133 114 159 148 209</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 211 48 141 161 150 133 114 159 148 209</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_moveAve.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 190</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 183</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 213 48 141 161 150 133 114 159 148</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 213 48 141 161 150 133 114 159 148</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_ahrs.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 188</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 187</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 191 22 48 141 161 150 133 114 159 148 125 38 83 107 63 32 129 74 193 194 185 201</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 191 22 48 141 161 150 133 114 159 148 125 38 83 107 63 32 129 74 193 194 185 201</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_matrix.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 196</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 184</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 193 141 194 161 150 133 114 159 148 185</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 193 141 194 161 150 133 114 159 148 185</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\Src\Peripherals\usart3_ble.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 197</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 195</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\Src\Peripherals\i2c2_sensors.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 200</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 182</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_pid.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 207</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 208</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 202</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 202</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\Src\Peripherals\tim2_motor.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 212</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 214</file>
+        </tool>
+      </outputs>
+    </file>
+    <forcedrebuild>
+      <name>[MULTI_TOOL]</name>
+      <tool>ILINK</tool>
+    </forcedrebuild>
   </configuration>
 </project>
 

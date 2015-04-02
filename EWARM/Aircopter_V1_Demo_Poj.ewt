@@ -96,8 +96,47 @@
     </group>
     <group>
       <name>User</name>
+      <group>
+        <name>Algorithm</name>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_ahrs.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_kalman.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_matrix.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_moveAve.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_pid.c</name>
+        </file>
+      </group>
+      <group>
+        <name>Peripherals</name>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Peripherals\i2c2_sensors.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Peripherals\tim2_motor.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Peripherals\usart3_ble.c</name>
+        </file>
+      </group>
+      <file>
+        <name>$PROJ_DIR$\..\Src\dma.c</name>
+      </file>
       <file>
         <name>$PROJ_DIR$\..\Src\freertos.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Src\gpio.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Src\i2c.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Src\main.c</name>
@@ -107,6 +146,12 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\Src\stm32f3xx_it.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Src\tim.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Src\usart.c</name>
       </file>
     </group>
   </group>
@@ -139,6 +184,12 @@
         <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_gpio.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_i2c.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_i2c_ex.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_pwr.c</name>
       </file>
       <file>
@@ -149,9 +200,6 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_rcc_ex.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_smbus.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_tim.c</name>
