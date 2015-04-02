@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * File Name          : freertos.c
-  * Date               : 02/04/2015 14:31:18
+  * Date               : 02/04/2015 18:01:29
   * Description        : Code for freertos applications
   ******************************************************************************
   *
@@ -37,7 +37,7 @@
 #include "task.h"
 #include "cmsis_os.h"
 
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN Includes */     
 #include <stdio.h>
 #include "i2c.h"
 /* USER CODE END Includes */
@@ -95,7 +95,7 @@ printf("%s\r\n", __func__);
 
   osThreadDef(bleRecvTask, StartBleRecvTask, osPriorityHigh, 0, 128);
   bleRecvTaskHandle = osThreadCreate(osThread(bleRecvTask), NULL);
-#if 1
+#if 0
   osThreadDef(uartTask, StartUartTask, osPriorityNormal, 0, 128);
   uartTaskHandle = osThreadCreate(osThread(uartTask), NULL);
 #endif

@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
-  * File Name          : I2C.h
+  * File Name          : dma.h
   * Date               : 02/04/2015 18:01:29
-  * Description        : This file provides code for the configuration
-  *                      of the I2C instances.
+  * Description        : This file contains all the function prototypes for
+  *                      the dma.c file
   ******************************************************************************
   *
   * COPYRIGHT(c) 2015 STMicroelectronics
@@ -33,8 +33,9 @@
   ******************************************************************************
   */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __i2c_H
-#define __i2c_H
+#ifndef __dma_H
+#define __dma_H
+
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -42,18 +43,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f3xx_hal.h"
 
-extern I2C_HandleTypeDef hi2c2;
-
-void MX_I2C2_Init(void);
+void MX_DMA_Init(void);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /*__ i2c_H */
 
-/**
-  * @}
-  */
+#endif /* __dma_H */
 
 /**
   * @}

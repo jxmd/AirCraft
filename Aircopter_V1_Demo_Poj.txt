@@ -50,10 +50,10 @@ Firmware Package Name and Version : STM32Cube FW_F3 V1.1.1
 
 Code Generation Settings : 
 STM32Cube Firmware Library Package : Copy all used libraries into the project folder
-Generate peripheral initialization as a pair of '.c/.h' files per IP : No
+Generate peripheral initialization as a pair of '.c/.h' files per IP : Yes
 Backup previously generated files when re-generating : No
 Delete previously generated files when not re-generated : Yes
-Set all free pins as analog (to optimize the power consumption) : No
+Set all free pins as analog (to optimize the power consumption) : Yes
 
 
 Toolchains Settings : 
