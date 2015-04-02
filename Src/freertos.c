@@ -37,7 +37,7 @@
 #include "task.h"
 #include "cmsis_os.h"
 
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "i2c.h"
 /* USER CODE END Includes */
@@ -95,10 +95,10 @@ printf("%s\r\n", __func__);
 
   osThreadDef(bleRecvTask, StartBleRecvTask, osPriorityHigh, 0, 128);
   bleRecvTaskHandle = osThreadCreate(osThread(bleRecvTask), NULL);
-#if 0
+
   osThreadDef(uartTask, StartUartTask, osPriorityNormal, 0, 128);
   uartTaskHandle = osThreadCreate(osThread(uartTask), NULL);
-#endif
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
