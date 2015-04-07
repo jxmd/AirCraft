@@ -39,7 +39,10 @@
 
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include "i2c.h"
+#include "i2c2_sensors.h"
+#include "algorithm_ahrs.h"
+#include "tim2_motor.h"
+#include "usart3_ble.h"
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -67,7 +70,7 @@ void StartUartTask(void const * argument);
 
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-printf("%s\r\n", __func__);
+  printf("%s\r\n", __func__);
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -112,12 +115,200 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
   printf("%s\r\n", __func__);
+#define MoveAveSize 8
+//  static float Acc_FIFO[3][MoveAveSize] = {0};
+//  static float Gyr_FIFO[3][MoveAveSize] = {0};
+//  static float Mag_FIFO[3][MoveAveSize] = {0};
+//
+//  static float OffsetSum[3] = {0};
+//  static uint16_t Correction_Time = 0;
   /* Infinite loop */
   for(;;)
+  {}
+  for(;;)
   {
-	HAL_I2C_IsDeviceReady(&hi2c2, 0xD4, 2, 100);
-    osDelay(20);
-	printf("%s\r\n", __func__);
+	/* Read Gyro data from LSM330DLC */
+	LSM330DLC_GyroReadAngRate(Gyr);
+//	printf("Gyr[X]:%f\tGyr[Y]:%f\tGyr[Z]:%f\r\n", Gyr[0], Gyr[1], Gyr[2]);
+#if 0
+	Gyr[0] = Gyr[0] - Gyro_Offset.Offset_X;
+	Gyr[1] = Gyr[1] - Gyro_Offset.Offset_Y;
+	Gyr[2] = Gyr[2] - Gyro_Offset.Offset_Z;
+#endif
+	/* Read Acc data from LSM330DLC */
+	LSM330DLC_AcceleroReadAcc(Acc);
+//	printf("Acc[X]:%f\tAcc[Y]:%f\tAcc[Z]:%f\r\n", Acc[0], Acc[1], Acc[2]);
+#if 0
+	Acc[0] = Acc[0] - Acc_Parameter.Acc_Offset.Offset_X;
+	Acc[1] = Acc[1] - Acc_Parameter.Acc_Offset.Offset_Y;
+	Acc[2] = Acc[2] - Acc_Parameter.Acc_Offset.Offset_Z;
+
+	Acc[0] = Acc[0] * Acc_Parameter.Acc_Coupling.K_X      \
+	  + Acc[1] * Acc_Parameter.Acc_Coupling.K_YX     \
+		+ Acc[2] * Acc_Parameter.Acc_Coupling.K_ZX;
+	Acc[1] = Acc[0] * Acc_Parameter.Acc_Coupling.K_XY     \
+	  + Acc[1] * Acc_Parameter.Acc_Coupling.K_Y      \
+		+ Acc[2] * Acc_Parameter.Acc_Coupling.K_ZY;
+	Acc[2] = Acc[0] * Acc_Parameter.Acc_Coupling.K_XZ     \
+	  + Acc[1] * Acc_Parameter.Acc_Coupling.K_YZ     \
+		+ Acc[2] * Acc_Parameter.Acc_Coupling.K_Z;
+#endif
+#ifdef	USE_MAGNETOMETER
+	LIS3MDL_CompassReadMag(Mag);
+
+//	printf("Mag[X]:%f\tMag[Y]:%f\tMag[Z]:%f\r\n", Mag[0], Mag[1], Mag[2]);
+#if 0
+	Mag[0] = Mag[0] - Mag_Parameter.Mag_Offset.Offset_X;
+	Mag[1] = Mag[1] - Mag_Parameter.Mag_Offset.Offset_Y;
+	Mag[2] = Mag[2] - Mag_Parameter.Mag_Offset.Offset_Z;
+
+	Mag[0] = Mag[0] * Mag_Parameter.Mag_Coupling.K_X      \
+	  + Mag[1] * Mag_Parameter.Mag_Coupling.K_YX     \
+		+ Mag[2] * Mag_Parameter.Mag_Coupling.K_ZX;
+	Mag[1] = Mag[0] * Mag_Parameter.Mag_Coupling.K_XY     \
+	  + Mag[1] * Mag_Parameter.Mag_Coupling.K_Y      \
+		+ Mag[2] * Mag_Parameter.Mag_Coupling.K_ZY;
+	Mag[2] = Mag[0] * Mag_Parameter.Mag_Coupling.K_XZ     \
+	  + Mag[1] * Mag_Parameter.Mag_Coupling.K_YZ     \
+		+ Mag[2] * Mag_Parameter.Mag_Coupling.K_Z;
+	/* Due to IC position in PCB*/
+	//Mag[0] = -Mag[0];
+	//Mag[1] = -Mag[1];
+#endif
+#endif
+
+
+#if 0
+	switch(SensorMode)
+	{
+	  /************************** Mode_CorrectGyr **************************************/
+	case Mode_GyrCorrect:
+
+	  YELLOW_ON;
+	  /* Offset Correction */
+#define GyroSampleSize 1024
+	  OffsetSum[0] += Gyr[0];
+	  OffsetSum[1] += Gyr[1];
+	  OffsetSum[2] += Gyr[2];
+	  Correction_Time++;
+	  if(Correction_Time == GyroSampleSize)
+	  {
+		Gyro_Offset.Offset_X = OffsetSum[0] / GyroSampleSize;
+		Gyro_Offset.Offset_Y = OffsetSum[1] / GyroSampleSize;
+		Gyro_Offset.Offset_Z = OffsetSum[2] / GyroSampleSize;
+
+		Correction_Time = 0;
+		/* Next Procedure */
+		SensorMode = Mode_AccCorrect;
+	  }
+	  break;
+
+	  /************************** Mode_CorrectAcc **************************************/
+	case Mode_AccCorrect:
+
+	  /* Offset Correction */
+	  Acc_Parameter.Acc_Offset.Offset_X = -0.007970729553635;
+	  Acc_Parameter.Acc_Offset.Offset_Y = 0.019836643844817;
+	  Acc_Parameter.Acc_Offset.Offset_Z = 0.006183107591687;
+	  /* Coupling Correction */
+	  Acc_Parameter.Acc_Coupling.K_X  = 0.970990949467151;
+	  Acc_Parameter.Acc_Coupling.K_Y  = 0.980792462583293;
+	  Acc_Parameter.Acc_Coupling.K_Z  = 0.965535220154680;
+	  Acc_Parameter.Acc_Coupling.K_YX = 0.002437447263339;
+	  Acc_Parameter.Acc_Coupling.K_ZX = 0.014915966356573;
+	  Acc_Parameter.Acc_Coupling.K_XY = 0;
+	  Acc_Parameter.Acc_Coupling.K_ZY = -0.005387874488198;
+	  Acc_Parameter.Acc_Coupling.K_XZ = 0;
+	  Acc_Parameter.Acc_Coupling.K_YZ = 0;
+	  /* Wait until FIFO is filled up */
+	  MoveAve_SMA(Acc[0], Acc_FIFO[0], MoveAveSize);
+	  MoveAve_SMA(Acc[1], Acc_FIFO[1], MoveAveSize);
+	  MoveAve_SMA(Acc[2], Acc_FIFO[2], MoveAveSize);
+	  Correction_Time++;
+	  if (Correction_Time == MoveAveSize+1)	//beacuse the first data is zero
+	  {
+		Correction_Time = 0;
+		/* Next Procedure */
+#ifdef	USE_MAGNETOMETER
+		SensorMode = Mode_MagCorrect;
+#else
+		SensorMode = Mode_Quaternion;
+#endif
+
+	  }
+	  break;
+
+	  /************************** Mode_CorrectMag **************************************/
+#ifdef	USE_MAGNETOMETER
+	case Mode_MagCorrect:
+
+	  /* Offset Correction */
+	  Mag_Parameter.Mag_Offset.Offset_X = 0.347320519123196;
+	  Mag_Parameter.Mag_Offset.Offset_Y = -0.441676977320650;
+	  Mag_Parameter.Mag_Offset.Offset_Z = 0.623926096014853;
+	  /* Coupling Correction */
+	  Mag_Parameter.Mag_Coupling.K_X  = 3.213533040206366;
+	  Mag_Parameter.Mag_Coupling.K_Y  = 3.241421222828024;
+	  Mag_Parameter.Mag_Coupling.K_Z  = 3.215694520594453;
+	  Mag_Parameter.Mag_Coupling.K_YX = 0.081451183121051;
+	  Mag_Parameter.Mag_Coupling.K_ZX = 0.006184918582682;
+	  Mag_Parameter.Mag_Coupling.K_XY = 0;
+	  Mag_Parameter.Mag_Coupling.K_ZY = -0.049199718330043;
+	  Mag_Parameter.Mag_Coupling.K_XZ = 0;
+	  Mag_Parameter.Mag_Coupling.K_YZ = 0;
+	  /* Wait until FIFO is filled up */
+	  MoveAve_SMA(Mag[0], Mag_FIFO[0], MoveAveSize);
+	  MoveAve_SMA(Mag[1], Mag_FIFO[1], MoveAveSize);
+	  MoveAve_SMA(Mag[2], Mag_FIFO[2], MoveAveSize);
+	  Correction_Time++;
+	  if (Correction_Time == MoveAveSize+1)	//beacuse the first data is zero
+	  {
+		Correction_Time = 0;
+		/* Next Procedure */
+		SensorMode = Mode_Quaternion;
+	  }
+	  break;
+#endif
+
+	  /************************** Quaternion Mode **************************************/
+	case Mode_Quaternion:
+
+	  /* Weighted Moving Average */
+	  Acc[0] = MoveAve_WMA(Acc[0], Acc_FIFO[0], MoveAveSize);
+	  Acc[1] = MoveAve_WMA(Acc[1], Acc_FIFO[1], MoveAveSize);
+	  Acc[2] = MoveAve_WMA(Acc[2], Acc_FIFO[2], MoveAveSize);
+#ifdef	USE_MAGNETOMETER
+	  Mag[0] = MoveAve_WMA(Mag[0], Mag_FIFO[0], MoveAveSize);
+	  Mag[1] = MoveAve_WMA(Mag[1], Mag_FIFO[1], MoveAveSize);
+	  Mag[2] = MoveAve_WMA(Mag[2], Mag_FIFO[2], MoveAveSize);
+#endif
+	  AHRS_Init(Acc, Mag, &AngE);
+	  SensorMode = Mode_Algorithm;
+	  break;
+
+	  /************************** Algorithm Mode ****************************************/
+	case Mode_Algorithm:
+
+	  /* Weighted Moving Average */
+	  Gyr[0] = MoveAve_WMA(Gyr[0], Gyr_FIFO[0], MoveAveSize);
+	  Gyr[1] = MoveAve_WMA(Gyr[1], Gyr_FIFO[1], MoveAveSize);
+	  Gyr[2] = MoveAve_WMA(Gyr[2], Gyr_FIFO[2], MoveAveSize);
+	  Acc[0] = MoveAve_WMA(Acc[0], Acc_FIFO[0], MoveAveSize);
+	  Acc[1] = MoveAve_WMA(Acc[1], Acc_FIFO[1], MoveAveSize);
+	  Acc[2] = MoveAve_WMA(Acc[2], Acc_FIFO[2], MoveAveSize);
+
+#ifdef	USE_MAGNETOMETER
+	  Mag[0] = MoveAve_WMA(Mag[0], Mag_FIFO[0], MoveAveSize);
+	  Mag[1] = MoveAve_WMA(Mag[1], Mag_FIFO[1], MoveAveSize);
+	  Mag[2] = MoveAve_WMA(Mag[2], Mag_FIFO[2], MoveAveSize);
+#endif
+	  UpdateFlag_AHRS ++;
+
+	  break;
+	}
+#endif
+    osDelay(500);
+//	printf("%s\r\n", __func__);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -130,8 +321,8 @@ void StartSensorTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(20);
-	printf("%s\r\n", __func__);
+    osDelay(200);
+//	printf("%s\r\n", __func__);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -141,10 +332,20 @@ void StartBleRecvTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
+//  Motor_Out(500,0,0,0);
+//  osDelay(2000);
+//  Motor_Out(0,500,0,0);
+//  osDelay(2000);
+//  Motor_Out(0,0,500,0);
+//  osDelay(2000);
+//  Motor_Out(0,0,0,500);
+//  osDelay(2000);
+//  Motor_Out(0,0,0,0);
   for(;;)
   {
-    osDelay(20);
-	printf("%s\r\n", __func__);
+	osDelay(200);
+	BLE_StartRead();
+//	printf("%s\r\n", __func__);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -156,8 +357,8 @@ void StartUartTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(20);
-	printf("%s\r\n", __func__);
+    osDelay(200);
+//	printf("%s\r\n", __func__);
   }
   /* USER CODE END StartDefaultTask */
 }

@@ -45,7 +45,7 @@
 extern TIM_HandleTypeDef htim2;
 
 void MX_TIM2_Init(void);
-
+void MX_TIM2_PWM_SetChannelPulse(uint32_t channel, uint16_t pulse);
 #ifdef __cplusplus
 }
 #endif

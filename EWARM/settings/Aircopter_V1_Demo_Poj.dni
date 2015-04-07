@@ -9,7 +9,7 @@ TriggerName=main
 LimitSize=0
 ByteLimit=50
 [DebugChecksum]
-Checksum=1714047785
+Checksum=1011172612
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -22,7 +22,7 @@ MixedMode=1
 [SWOTraceHWSettings]
 OverrideDefaultClocks=0
 CpuClock=72000000
-ClockAutoDetect=0
+ClockAutoDetect=1
 ClockWanted=2000000
 JtagSpeed=2000000
 Prescaler=36
@@ -39,6 +39,13 @@ ITMlogFile=$PROJ_DIR$\ITM.log
 [SfrWindow]
 Show=1 1
 Sort=4 0
+[PlDriver]
+MemConfigValue=C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.0\arm\CONFIG\debugger\ST\STM32F373xC.ddf
+[Jet]
+DisableInterrupts=0
+MultiCoreRunAll=0
+[ArmDriver]
+EnableCache=1
 [SWOTraceWindow]
 PcSampling=0
 InterruptLogs=0

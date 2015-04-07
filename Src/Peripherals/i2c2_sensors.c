@@ -9,11 +9,16 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "i2c2_sensors.h"
-
+#include <string.h>
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define I2C_ReadReg(SlaveAddr, ReadAddr, ReadBuf, NumByte) HAL_I2C_Mem_Read(&hi2c2, SlaveAddr, ReadAddr, 1, ReadBuf, NumByte, SENSOR_FLAG_TIMEOUT)
+//HAL_I2C_Mem_Read(&hi2c2, SlaveAddr, ReadAddr, 1, ReadBuf, NumByte, SENSOR_FLAG_TIMEOUT);
+#define I2C_ReadReg(SlaveAddr, ReadAddr, ReadBuf, NumByte) do{\
+while(HAL_I2C_Mem_Read_DMA(&hi2c2, SlaveAddr, ReadAddr, 1, ReadBuf, NumByte) != HAL_OK);\
+  while (HAL_I2C_GetState(&hi2c2) != HAL_I2C_STATE_READY);\
+  }while(0)
 /* Private variables ---------------------------------------------------------*/
+uint8_t xBuffer[6];
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -124,16 +129,15 @@ HAL_StatusTypeDef Sensor_Init( void )
 
 void LSM330DLC_GyroReadAngRate (float* pfData)
 {
-  uint8_t tmpbuffer[6] ={0};
   uint8_t i = 0;
   int16_t RawData[3] = {0};
   float sensitivity = LSM330DLC_Gyr_Sensitivity_500dps;
-
-  I2C_ReadReg(ADDR_LSM330DLC_G, OUT_X_L_G, tmpbuffer, 6);
+  memset(xBuffer, 0, 6);
+  I2C_ReadReg(ADDR_LSM330DLC_G, OUT_X_L_G, xBuffer, 6);
 
   for(i=0; i<3; i++)
   {
-	RawData[i]=(int16_t)(((uint16_t)tmpbuffer[2*i+1] << 8) + tmpbuffer[2*i]);
+	RawData[i]=(int16_t)(((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i]);
   }
 
   /* divide by sensitivity */
@@ -151,17 +155,16 @@ void LSM330DLC_GyroReadAngRate (float* pfData)
 
 void LSM330DLC_AcceleroReadAcc(float* pfData)
 {
-  uint8_t tmpbuffer[6] ={0};
   uint8_t i = 0;
   uint8_t cDivider = 16;
   int16_t RawData[3] = {0};
   float sensitivity = LSM330DLC_Acc_Sensitivity_2g;
-
-  I2C_ReadReg(ADDR_LSM330DLC_A, OUT_X_L_A, tmpbuffer, 6);
+  memset(xBuffer, 0, 6);
+  I2C_ReadReg(ADDR_LSM330DLC_A, OUT_X_L_A, xBuffer, 6);
 
   for(i=0; i<3; i++)
   {
-	RawData[i]=((int16_t)((uint16_t)tmpbuffer[2*i+1] << 8) + tmpbuffer[2*i])/cDivider;
+	RawData[i]=((int16_t)((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i])/cDivider;
   }
 
   /* divide by sensitivity */
@@ -179,16 +182,15 @@ void LSM330DLC_AcceleroReadAcc(float* pfData)
 
 void LIS3MDL_CompassReadMag (float* pfData)
 {
-  uint8_t tmpbuffer[6] ={0};
   uint8_t i = 0;
   int16_t RawData[3] = {0};
   float sensitivity = LIS3MDL_Mag_Sensitivity_4guass;
-
-  I2C_ReadReg(ADDR_LIS3MDL, OUT_X_L_M, tmpbuffer, 6);
+  memset(xBuffer, 0, 6);
+  I2C_ReadReg(ADDR_LIS3MDL, OUT_X_L_M, xBuffer, 6);
 
   for(i=0; i<3; i++)
   {
-	RawData[i]=(int16_t)(((uint16_t)tmpbuffer[2*i+1] << 8) + tmpbuffer[2*i]);
+	RawData[i]=(int16_t)(((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i]);
   }
 
   /* divide by sensitivity */
@@ -196,4 +198,19 @@ void LIS3MDL_CompassReadMag (float* pfData)
   {
 	pfData[i]=(float)RawData[i] / sensitivity;
   }
+}
+
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+//  printf("%s\n\r", __func__);
+}
+
+void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+//  printf("%s\n\r", __func__);
+}
+
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+  printf("%s\n\r", __func__);
 }

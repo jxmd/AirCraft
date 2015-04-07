@@ -40,6 +40,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "usart3_ble.h"
 
 /* USER CODE BEGIN Includes */
 #include "i2c2_sensors.h"
@@ -104,6 +105,7 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   Sensor_Init();
+  BLE_Init();
   printf("Peripherals init OK!\r\n");
   /* USER CODE END 2 */
 
@@ -120,7 +122,7 @@ int main(void)
   while (1)
   {
   /* USER CODE END WHILE */
-
+	printf("We should never get here\r\n");
   /* USER CODE BEGIN 3 */
 
   }

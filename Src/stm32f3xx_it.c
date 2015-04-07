@@ -38,7 +38,8 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "usart3_ble.h"
+#include "stdio.h"
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -51,7 +52,7 @@ extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
 
 /******************************************************************************/
-/*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
+/*            Cortex-M4 Processor Interruption and Exception Handlers         */
 /******************************************************************************/
 
 /**
@@ -96,7 +97,7 @@ void DMA1_Channel3_IRQHandler(void)
   /* USER CODE END DMA1_Channel3_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_usart3_rx);
   /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
-
+  BLE_ReadOK();
   /* USER CODE END DMA1_Channel3_IRQn 1 */
 }
 
@@ -106,6 +107,8 @@ void DMA1_Channel3_IRQHandler(void)
 void USART3_IRQHandler(void)
 {
   /* USER CODE BEGIN USART3_IRQn 0 */
+  printf("123");
+  BLE_StartRead();
 
   /* USER CODE END USART3_IRQn 0 */
   HAL_UART_IRQHandler(&huart3);
