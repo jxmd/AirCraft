@@ -60,9 +60,15 @@ void StartDefaultTask(void const * argument);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE BEGIN FunctionPrototypes */
+#define USART_Send(x) do{ \
+uint8_t c = x; \
+HAL_UART_Transmit(&huart1, &c, 1, 1); \
+}while(0)
+
 void StartSensorTask(void const * argument);
 void StartBleRecvTask(void const * argument);
 void StartUartTask(void const * argument);
+void EullerReport(EulerAngle* pAngE);
 /* USER CODE END FunctionPrototypes */
 /* Hook prototypes */
 
@@ -93,14 +99,14 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 
-  osThreadDef(sensorTask, StartSensorTask, osPriorityHigh, 0, 128);
-  sensorTaskHandle = osThreadCreate(osThread(sensorTask), NULL);
-
-  osThreadDef(bleRecvTask, StartBleRecvTask, osPriorityHigh, 0, 128);
-  bleRecvTaskHandle = osThreadCreate(osThread(bleRecvTask), NULL);
-
-  osThreadDef(uartTask, StartUartTask, osPriorityNormal, 0, 128);
-  uartTaskHandle = osThreadCreate(osThread(uartTask), NULL);
+//  osThreadDef(sensorTask, StartSensorTask, osPriorityHigh, 0, 128);
+//  sensorTaskHandle = osThreadCreate(osThread(sensorTask), NULL);
+//
+//  osThreadDef(bleRecvTask, StartBleRecvTask, osPriorityHigh, 0, 128);
+//  bleRecvTaskHandle = osThreadCreate(osThread(bleRecvTask), NULL);
+//
+//  osThreadDef(uartTask, StartUartTask, osPriorityNormal, 0, 128);
+//  uartTaskHandle = osThreadCreate(osThread(uartTask), NULL);
 
   /* USER CODE END RTOS_THREADS */
 
@@ -115,30 +121,31 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
   printf("%s\r\n", __func__);
+  Sensor_Init();
+//  osDelay(1000);
 #define MoveAveSize 8
-//  static float Acc_FIFO[3][MoveAveSize] = {0};
-//  static float Gyr_FIFO[3][MoveAveSize] = {0};
-//  static float Mag_FIFO[3][MoveAveSize] = {0};
-//
-//  static float OffsetSum[3] = {0};
-//  static uint16_t Correction_Time = 0;
+  static float Acc_FIFO[3][MoveAveSize] = {0};
+  static float Gyr_FIFO[3][MoveAveSize] = {0};
+  static float Mag_FIFO[3][MoveAveSize] = {0};
+
+  static float OffsetSum[3] = {0};
+  static uint16_t Correction_Time = 0;
+  static uint8_t cycle = 0;
   /* Infinite loop */
-  for(;;)
-  {}
   for(;;)
   {
 	/* Read Gyro data from LSM330DLC */
 	LSM330DLC_GyroReadAngRate(Gyr);
-//	printf("Gyr[X]:%f\tGyr[Y]:%f\tGyr[Z]:%f\r\n", Gyr[0], Gyr[1], Gyr[2]);
-#if 0
+//	printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
+#if 1
 	Gyr[0] = Gyr[0] - Gyro_Offset.Offset_X;
 	Gyr[1] = Gyr[1] - Gyro_Offset.Offset_Y;
 	Gyr[2] = Gyr[2] - Gyro_Offset.Offset_Z;
 #endif
 	/* Read Acc data from LSM330DLC */
 	LSM330DLC_AcceleroReadAcc(Acc);
-//	printf("Acc[X]:%f\tAcc[Y]:%f\tAcc[Z]:%f\r\n", Acc[0], Acc[1], Acc[2]);
-#if 0
+//	printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
+#if 1
 	Acc[0] = Acc[0] - Acc_Parameter.Acc_Offset.Offset_X;
 	Acc[1] = Acc[1] - Acc_Parameter.Acc_Offset.Offset_Y;
 	Acc[2] = Acc[2] - Acc_Parameter.Acc_Offset.Offset_Z;
@@ -156,8 +163,8 @@ void StartDefaultTask(void const * argument)
 #ifdef	USE_MAGNETOMETER
 	LIS3MDL_CompassReadMag(Mag);
 
-//	printf("Mag[X]:%f\tMag[Y]:%f\tMag[Z]:%f\r\n", Mag[0], Mag[1], Mag[2]);
-#if 0
+//	printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
+#if 1
 	Mag[0] = Mag[0] - Mag_Parameter.Mag_Offset.Offset_X;
 	Mag[1] = Mag[1] - Mag_Parameter.Mag_Offset.Offset_Y;
 	Mag[2] = Mag[2] - Mag_Parameter.Mag_Offset.Offset_Z;
@@ -178,15 +185,15 @@ void StartDefaultTask(void const * argument)
 #endif
 
 
-#if 0
+#if 1
 	switch(SensorMode)
 	{
 	  /************************** Mode_CorrectGyr **************************************/
 	case Mode_GyrCorrect:
 
-	  YELLOW_ON;
+//	  YELLOW_ON;
 	  /* Offset Correction */
-#define GyroSampleSize 1024
+#define GyroSampleSize 64
 	  OffsetSum[0] += Gyr[0];
 	  OffsetSum[1] += Gyr[1];
 	  OffsetSum[2] += Gyr[2];
@@ -302,12 +309,19 @@ void StartDefaultTask(void const * argument)
 	  Mag[1] = MoveAve_WMA(Mag[1], Mag_FIFO[1], MoveAveSize);
 	  Mag[2] = MoveAve_WMA(Mag[2], Mag_FIFO[2], MoveAveSize);
 #endif
-	  UpdateFlag_AHRS ++;
+	  cycle ++;
+	  if(cycle >= 10){
+		cycle = 0;
+		AHRS_Update(Gyr, Acc, Mag, &AngE);
+		EullerReport(&AngE);
+		//Control_Angle(&AngE,&expect);
+		//Control_Gyro(Gyr);
+	  }
 
 	  break;
 	}
 #endif
-    osDelay(500);
+    osDelay(20);
 //	printf("%s\r\n", __func__);
   }
   /* USER CODE END StartDefaultTask */
@@ -321,8 +335,7 @@ void StartSensorTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(200);
-//	printf("%s\r\n", __func__);
+    AHRS_Update(Gyr, Acc, Mag, &AngE);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -344,7 +357,7 @@ void StartBleRecvTask(void const * argument)
   for(;;)
   {
 	osDelay(200);
-	BLE_StartRead();
+	//BLE_StartRead();
 //	printf("%s\r\n", __func__);
   }
   /* USER CODE END StartDefaultTask */
@@ -361,6 +374,64 @@ void StartUartTask(void const * argument)
 //	printf("%s\r\n", __func__);
   }
   /* USER CODE END StartDefaultTask */
+}
+
+/**
+* @brief  Report Euler angles(Degree) to PC.
+*
+* @param  pAngE: Pointer to the buffer containing the Euler angles(radias).
+*
+* @retval None.
+*
+*/
+void EullerReport(EulerAngle* pAngE)
+{
+  int16_t  yaw 	 = (int16_t)(toDeg(pAngE->Yaw)*10);
+  int16_t  pitch = (int16_t)(toDeg(pAngE->Pitch)*10);
+  int16_t  roll	 = (int16_t)(toDeg(pAngE->Roll)*10);
+  uint8_t  ctemp = 0;
+  uint16_t verification = 0xB1;
+
+  USART_Send(0xA5);
+  USART_Send(0x5A);
+  USART_Send(0x10);
+  USART_Send(0xA1);
+
+  if(yaw < 0)
+	yaw = 32768 - yaw;
+  ctemp = yaw >> 8;
+
+  USART_Send(ctemp);
+  verification += ctemp;
+  ctemp = yaw;
+
+  USART_Send(ctemp);
+  verification += ctemp;
+
+  if(pitch < 0)
+	pitch = 32768 - pitch;
+  ctemp = pitch >> 8;
+
+  USART_Send(ctemp);
+  verification += ctemp;
+  ctemp = pitch;
+
+  USART_Send(ctemp);
+  verification += ctemp;
+
+  if(roll < 0)
+	roll = 32768 - roll;
+  ctemp = roll >> 8;
+
+  USART_Send(ctemp);
+  verification += ctemp;
+  ctemp = roll;
+
+  USART_Send(ctemp);
+  verification += ctemp;
+
+  USART_Send(verification % 256);
+  USART_Send(0xAA);
 }
 /* USER CODE END Application */
 

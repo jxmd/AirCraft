@@ -12,11 +12,21 @@
 #include <string.h>
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-//HAL_I2C_Mem_Read(&hi2c2, SlaveAddr, ReadAddr, 1, ReadBuf, NumByte, SENSOR_FLAG_TIMEOUT);
+
 #define I2C_ReadReg(SlaveAddr, ReadAddr, ReadBuf, NumByte) do{\
-while(HAL_I2C_Mem_Read_DMA(&hi2c2, SlaveAddr, ReadAddr, 1, ReadBuf, NumByte) != HAL_OK);\
-  while (HAL_I2C_GetState(&hi2c2) != HAL_I2C_STATE_READY);\
-  }while(0)
+if(NumByte > 1) \
+  HAL_I2C_Mem_Read(&hi2c2, SlaveAddr, ReadAddr|0x80, 1, ReadBuf, NumByte, SENSOR_FLAG_TIMEOUT);\
+	else \
+	  HAL_I2C_Mem_Read(&hi2c2, SlaveAddr, ReadAddr, 1, ReadBuf, NumByte, SENSOR_FLAG_TIMEOUT);\
+}while(0)
+
+//#define I2C_ReadReg(SlaveAddr, ReadAddr, ReadBuf, NumByte) do{\
+//if(NumByte > 1) \
+//while(HAL_I2C_Mem_Read_DMA(&hi2c2, SlaveAddr, ReadAddr|0x80, I2C_MEMADD_SIZE_8BIT, ReadBuf, NumByte) != HAL_OK);\
+//  else \
+//	while(HAL_I2C_Mem_Read_DMA(&hi2c2, SlaveAddr, ReadAddr, I2C_MEMADD_SIZE_8BIT, ReadBuf, NumByte) != HAL_OK);\
+//  while (HAL_I2C_GetState(&hi2c2) != HAL_I2C_STATE_READY);\
+//  }while(0)
 /* Private variables ---------------------------------------------------------*/
 uint8_t xBuffer[6];
 /* Private function prototypes -----------------------------------------------*/
@@ -121,6 +131,15 @@ HAL_StatusTypeDef Sensor_Init( void )
   return HAL_OK;
 }
 
+void dump_xBuffer()
+{
+  int i = 0;
+  for(i = 0;i < 6;i++)
+  {
+	printf("xBuffer[%d] = %02x\r\n", i, xBuffer[i]);
+  }
+}
+
 /**
 * @brief  Calculate the angular Data rate Gyroscope.
 * @param  pfData : Pointer to the data out.
@@ -133,8 +152,8 @@ void LSM330DLC_GyroReadAngRate (float* pfData)
   int16_t RawData[3] = {0};
   float sensitivity = LSM330DLC_Gyr_Sensitivity_500dps;
   memset(xBuffer, 0, 6);
-  I2C_ReadReg(ADDR_LSM330DLC_G, OUT_X_L_G, xBuffer, 6);
-
+  I2C_ReadReg(ADDR_LSM330DLC_G, OUT_X_L_G, (uint8_t *)xBuffer, 6);
+//dump_xBuffer();
   for(i=0; i<3; i++)
   {
 	RawData[i]=(int16_t)(((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i]);
@@ -160,8 +179,8 @@ void LSM330DLC_AcceleroReadAcc(float* pfData)
   int16_t RawData[3] = {0};
   float sensitivity = LSM330DLC_Acc_Sensitivity_2g;
   memset(xBuffer, 0, 6);
-  I2C_ReadReg(ADDR_LSM330DLC_A, OUT_X_L_A, xBuffer, 6);
-
+  I2C_ReadReg(ADDR_LSM330DLC_A, OUT_X_L_A, (uint8_t *)xBuffer, 6);
+//dump_xBuffer();
   for(i=0; i<3; i++)
   {
 	RawData[i]=((int16_t)((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i])/cDivider;
@@ -186,8 +205,8 @@ void LIS3MDL_CompassReadMag (float* pfData)
   int16_t RawData[3] = {0};
   float sensitivity = LIS3MDL_Mag_Sensitivity_4guass;
   memset(xBuffer, 0, 6);
-  I2C_ReadReg(ADDR_LIS3MDL, OUT_X_L_M, xBuffer, 6);
-
+  I2C_ReadReg(ADDR_LIS3MDL, OUT_X_L_M, (uint8_t *)xBuffer, 6);
+//dump_xBuffer();
   for(i=0; i<3; i++)
   {
 	RawData[i]=(int16_t)(((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i]);

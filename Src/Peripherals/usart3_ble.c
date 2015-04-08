@@ -28,6 +28,7 @@ void BLE_Init( void )
   BLE_Mode( 0 );
   BLE_Power_Reset(  );
   BLE_BroadCast_Enable( 1 );
+  BLE_Input_Enable(1);
 }
 
 /**
