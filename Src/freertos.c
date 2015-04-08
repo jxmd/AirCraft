@@ -37,12 +37,13 @@
 #include "task.h"
 #include "cmsis_os.h"
 
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "i2c2_sensors.h"
 #include "algorithm_ahrs.h"
 #include "tim2_motor.h"
 #include "usart3_ble.h"
+#include "leds.h"
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -114,6 +115,7 @@ void vApplicationTickHook( void )
    added here, but the tick hook is called from an interrupt context, so
    code must not attempt to block, and only the interrupt safe FreeRTOS API
    functions can be used (those that end in FromISR()). */
+  LED_GreenToggle();
 }
 /* USER CODE END 3 */
 
@@ -123,6 +125,7 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
    /* Run time stack overflow checking is performed if
    configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
    called if a stack overflow is detected. */
+  LED_RedToggle();
 }
 /* USER CODE END 4 */
 
@@ -139,6 +142,7 @@ void vApplicationMallocFailedHook(void)
    FreeRTOSConfig.h, and the xPortGetFreeHeapSize() API function can be used
    to query the size of free heap space that remains (although it does not
    provide information on how the remaining heap might be fragmented). */
+  LED_RedToggle();
 }
 /* USER CODE END 5 */
 
@@ -206,16 +210,16 @@ void StartDefaultTask(void const * argument)
   {
 	/* Read Gyro data from LSM330DLC */
 	LSM330DLC_GyroReadAngRate(Gyr);
-//	printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
-#if 1
+	printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
+
 	Gyr[0] = Gyr[0] - Gyro_Offset.Offset_X;
 	Gyr[1] = Gyr[1] - Gyro_Offset.Offset_Y;
 	Gyr[2] = Gyr[2] - Gyro_Offset.Offset_Z;
-#endif
+
 	/* Read Acc data from LSM330DLC */
 	LSM330DLC_AcceleroReadAcc(Acc);
-//	printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
-#if 1
+	printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
+
 	Acc[0] = Acc[0] - Acc_Parameter.Acc_Offset.Offset_X;
 	Acc[1] = Acc[1] - Acc_Parameter.Acc_Offset.Offset_Y;
 	Acc[2] = Acc[2] - Acc_Parameter.Acc_Offset.Offset_Z;
@@ -229,12 +233,12 @@ void StartDefaultTask(void const * argument)
 	Acc[2] = Acc[0] * Acc_Parameter.Acc_Coupling.K_XZ     \
 	  + Acc[1] * Acc_Parameter.Acc_Coupling.K_YZ     \
 		+ Acc[2] * Acc_Parameter.Acc_Coupling.K_Z;
-#endif
+
 #ifdef	USE_MAGNETOMETER
 	LIS3MDL_CompassReadMag(Mag);
 
-//	printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
-#if 1
+	printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
+
 	Mag[0] = Mag[0] - Mag_Parameter.Mag_Offset.Offset_X;
 	Mag[1] = Mag[1] - Mag_Parameter.Mag_Offset.Offset_Y;
 	Mag[2] = Mag[2] - Mag_Parameter.Mag_Offset.Offset_Z;
@@ -252,10 +256,7 @@ void StartDefaultTask(void const * argument)
 	//Mag[0] = -Mag[0];
 	//Mag[1] = -Mag[1];
 #endif
-#endif
 
-
-#if 1
 	switch(SensorMode)
 	{
 	  /************************** Mode_CorrectGyr **************************************/
@@ -383,14 +384,13 @@ void StartDefaultTask(void const * argument)
 	  if(cycle >= 10){
 		cycle = 0;
 		AHRS_Update(Gyr, Acc, Mag, &AngE);
-		EullerReport(&AngE);
+		//EullerReport(&AngE);
 		//Control_Angle(&AngE,&expect);
 		//Control_Gyro(Gyr);
 	  }
 
 	  break;
 	}
-#endif
     osDelay(20);
 //	printf("%s\r\n", __func__);
   }

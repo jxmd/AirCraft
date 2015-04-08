@@ -21,7 +21,7 @@
 
 typedef enum {
   Mode_GyrCorrect,
-  Mode_AccCorrect,  
+  Mode_AccCorrect,
   Mode_MagCorrect,
   Mode_Quaternion,
   Mode_Algorithm
@@ -58,13 +58,13 @@ typedef struct {
 typedef struct {
   float Offset_X;
   float Offset_Y;
-  float Offset_Z; 
+  float Offset_Z;
 } GYRO_OffsetTypeDef;
 
 
 /* Accelerometer */
 typedef struct {
-  float K_X;  
+  float K_X;
   float K_Y;
   float K_Z;
   float K_YX;
@@ -72,7 +72,7 @@ typedef struct {
   float K_XY;
   float K_ZY;
   float K_XZ;
-  float K_YZ; 
+  float K_YZ;
 } ACC_CouplingTypeDef;
 
 typedef struct {
@@ -83,14 +83,14 @@ typedef struct {
 
 
 typedef struct {
-  ACC_CouplingTypeDef Acc_Coupling; 
+  ACC_CouplingTypeDef Acc_Coupling;
   ACC_OffsetTypeDef   Acc_Offset;
 } ACC_ParameterTypeDef;
 
 
 /* Magnetometer */
 typedef struct {
-  float K_X;  
+  float K_X;
   float K_Y;
   float K_Z;
   float K_YX;
@@ -98,7 +98,7 @@ typedef struct {
   float K_XY;
   float K_ZY;
   float K_XZ;
-  float K_YZ; 
+  float K_YZ;
 } MAG_CouplingTypeDef;
 
 
@@ -111,7 +111,7 @@ typedef struct {
 
 
 typedef struct {
-  MAG_CouplingTypeDef Mag_Coupling; 
+  MAG_CouplingTypeDef Mag_Coupling;
   MAG_OffsetTypeDef   Mag_Offset;
 } MAG_ParameterTypeDef;
 
@@ -153,49 +153,24 @@ extern MAG_ParameterTypeDef		Mag_Parameter;
   *
   * @param  pAcc:  Pointer to the buffer containing the data of accelerometer.
   * @param  pMag:  Pointer to the buffer containing the data of magnetometer.
-  * @param  pAngE: Pointer to the buffer containing the Euler angles(radias).       					 		
+  * @param  pAngE: Pointer to the buffer containing the Euler angles(radias).
   *
   * @retval None.
-  *					
+  *
   */
 void AHRS_Init(float* pAcc, float* pMag, EulerAngle* pAngE);
 
 /**
-  * @brief  Update the attitude and heading. 
+  * @brief  Update the attitude and heading.
   *
   * @param  pGyr:  Pointer to the buffer containing the data of gyroscope.
   * @param  pAcc:  Pointer to the buffer containing the data of accelerometer.
   * @param  pMag:  Pointer to the buffer containing the data of magnetometer.
-  * @param  pAngE: Pointer to the buffer containing the Euler angles(radias).       					 		
+  * @param  pAngE: Pointer to the buffer containing the Euler angles(radias).
   *
   * @retval None.
-  *					
+  *
   */
 void AHRS_Update(float* pGyr, float* pAcc, float* pMag, EulerAngle* pAngE);
-
-
-/**
-  * @brief  Report Euler angles(Degree) to PC.
-  *
-  * @param  pAngE: Pointer to the buffer containing the Euler angles(radias).       					 		
-  *
-  * @retval None.
-  *					
-  */
-void EullerReport(EulerAngle* pAngE);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif
 
