@@ -38,7 +38,7 @@
 #include "dma.h"
 #include "i2c.h"
 #include "tim.h"
-#include "usart.h"
+#include "usart1_dbg.h"
 #include "gpio.h"
 #include "usart3_ble.h"
 
@@ -73,8 +73,7 @@ PUTCHAR_PROTOTYPE
 {
   /* Place your implementation of fputc here */
   /* e.g. write a character to the USART */
-  uint8_t c = ch;
-  HAL_UART_Transmit(&huart1, &c, 1, 1);
+  USART_DBG_Send(ch);
   return ch;
 }
 extern PUTCHAR_PROTOTYPE;
@@ -104,6 +103,7 @@ int main(void)
   MX_USART3_UART_Init();
 
   /* USER CODE BEGIN 2 */
+  USART_DBG_Init();
 
   //BLE_Init();
   printf("Peripherals init OK!\r\n");

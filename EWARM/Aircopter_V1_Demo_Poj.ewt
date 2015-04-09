@@ -126,7 +126,13 @@
           <name>$PROJ_DIR$\..\Src\Peripherals\tim2_motor.c</name>
         </file>
         <file>
+          <name>$PROJ_DIR$\..\Src\Peripherals\usart1_dbg.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$\..\Src\Peripherals\usart3_ble.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Peripherals\usart_buffer.c</name>
         </file>
       </group>
       <file>
