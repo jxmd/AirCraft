@@ -14,6 +14,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "i2c.h"
+#include "leds.h"
+#include "my_free_rtos.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,7 +172,5 @@
 
 /* Exported functions ------------------------------------------------------- */
 HAL_StatusTypeDef Sensor_Init( void );
-void LSM330DLC_GyroReadAngRate (float* pfData);
-void LSM330DLC_AcceleroReadAcc(float* pfData);
-void LIS3MDL_CompassReadMag (float* pfData);
+void StartReadSensors(float* pfGData, float* pfAData, float* pfMData, float* pfBData);
 #endif

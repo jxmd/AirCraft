@@ -24,7 +24,7 @@ static uint16_t volatile USART1_IS_INITED = 0;
 
 void USART_DBG_Init( void )
 {
-  UartTxRxBuf_Reg(COM1, BUFFER_TX, 512);
+  UartTxRxBuf_Reg(COM1, BUFFER_TX, 1024);
   USART1_IS_INITED = 1;
 }
 

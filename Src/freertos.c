@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * File Name          : freertos.c
-  * Date               : 09/04/2015 16:40:09
+  * Date               : 09/04/2015 19:55:02
   * Description        : Code for freertos applications
   ******************************************************************************
   *
@@ -38,6 +38,7 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */
+#include "my_free_rtos.h"
 #include <stdio.h>
 #include "i2c2_sensors.h"
 #include "algorithm_ahrs.h"
@@ -54,6 +55,7 @@ osTimerId getSensorDataTimerHandle;
 /* USER CODE BEGIN Variables */
 osThreadId sensorTaskHandle;
 osSemaphoreId sensorSemaphore;
+osSemaphoreId sensorOKSemaphore;
 osThreadId bleRecvTaskHandle;
 osThreadId uartTaskHandle;
 /* USER CODE END Variables */
@@ -65,10 +67,7 @@ void getSensorDataTimerCallback(void const * argument);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE BEGIN FunctionPrototypes */
-#define USART_Send(x) do{ \
-uint8_t c = x; \
-HAL_UART_Transmit(&huart1, &c, 1, 1); \
-}while(0)
+#define USART_Send(x) USART_DBG_Send(x)
 
 void StartSensorTask(void const * argument);
 void StartBleRecvTask(void const * argument);
@@ -104,7 +103,7 @@ void vApplicationTickHook( void )
    added here, but the tick hook is called from an interrupt context, so
    code must not attempt to block, and only the interrupt safe FreeRTOS API
    functions can be used (those that end in FromISR()). */
-  LED_GreenToggle();
+	 LED_GreenToggle();
 }
 /* USER CODE END 3 */
 
@@ -152,9 +151,16 @@ void MX_FREERTOS_Init(void) {
   osSemaphoreDef(sensorSemaphore);
   sensorSemaphore = osSemaphoreCreate(osSemaphore(sensorSemaphore), 1);
   if(sensorSemaphore == NULL){
-	printf("osSemaphoreCreate Error\r\n");
+	printf("osSemaphoreCreate sensorSemaphore Error\r\n");
 	return;
   }
+  osSemaphoreDef(sensorOKSemaphore);
+  sensorOKSemaphore = osSemaphoreCreate(osSemaphore(sensorOKSemaphore), 1);
+  if(sensorOKSemaphore == NULL){
+	printf("osSemaphoreCreate sensorOKSemaphore Error\r\n");
+	return;
+  }
+
 
   /* USER CODE END RTOS_SEMAPHORES */
 
@@ -169,7 +175,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-//  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 512);
+//  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
 //  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -217,19 +223,31 @@ void getSensorDataTimerCallback(void const * argument)
   static float OffsetSum[3] = {0};
   static uint16_t Correction_Time = 0;
   static uint8_t cycle = 0;
-  printf("%s cycle:%d\r\n", __func__, cycle);
-  LED_BlueOn();
-  /* Read Gyro data from LSM330DLC */
-  LSM330DLC_GyroReadAngRate(Gyr);
-  printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
+//  printf("%s cycle:%d\r\n", __func__, cycle);
+
+  StartReadSensors(Gyr,
+						Acc,
+#ifdef USE_MAGNETOMETER
+						Mag,
+#else
+						NULL,
+#endif
+
+#ifdef USE_BAROMETER
+						NULL
+#else
+						NULL
+#endif
+						  );
+  if(osSemaphoreWait(sensorOKSemaphore, 100) != 0)
+	return;
+//  printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
+//  printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
+//  printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
 
   Gyr[0] = Gyr[0] - Gyro_Offset.Offset_X;
   Gyr[1] = Gyr[1] - Gyro_Offset.Offset_Y;
   Gyr[2] = Gyr[2] - Gyro_Offset.Offset_Z;
-
-  /* Read Acc data from LSM330DLC */
-  LSM330DLC_AcceleroReadAcc(Acc);
-  //	printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
 
   Acc[0] = Acc[0] - Acc_Parameter.Acc_Offset.Offset_X;
   Acc[1] = Acc[1] - Acc_Parameter.Acc_Offset.Offset_Y;
@@ -246,9 +264,6 @@ void getSensorDataTimerCallback(void const * argument)
 	  + Acc[2] * Acc_Parameter.Acc_Coupling.K_Z;
 
 #ifdef	USE_MAGNETOMETER
-  LIS3MDL_CompassReadMag(Mag);
-
-  //	printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
 
   Mag[0] = Mag[0] - Mag_Parameter.Mag_Offset.Offset_X;
   Mag[1] = Mag[1] - Mag_Parameter.Mag_Offset.Offset_Y;
@@ -399,25 +414,27 @@ void getSensorDataTimerCallback(void const * argument)
 
 	break;
   }
-  LED_BlueOff();
   /* USER CODE END getSensorDataTimerCallback */
 }
 
 /* USER CODE BEGIN Application */
+void SensorsReadOK()
+{
+  osSemaphoreRelease(sensorOKSemaphore);
+}
 void StartSensorTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
 
-  osTimerStart(getSensorDataTimerHandle, 1000 / 100);
+  osTimerStart(getSensorDataTimerHandle, 1000 / 500);
   /* Infinite loop */
   for(;;)
   {
-	printf("%s\r\n", __func__);
-	if(osSemaphoreWait(sensorSemaphore, 1000) > 0){
+	if(osSemaphoreWait(sensorSemaphore, 100) == 0){
 	  LED_RedOn();
 	  AHRS_Update(Gyr, Acc, Mag, &AngE);
-	  printf("+ AngE.Roll:%f\tAngE.Pitch:%f\tAngE.Yaw:%f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
-	  //EullerReport(&AngE);
+	  //printf("+ AngE.Roll:%f\tAngE.Pitch:%f\tAngE.Yaw:%f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
+	  EullerReport(&AngE);
 	  //Control_Angle(&AngE,&expect);
 	  //Control_Gyro(Gyr);
 	  LED_RedOff();

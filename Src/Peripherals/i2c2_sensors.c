@@ -12,24 +12,37 @@
 #include <string.h>
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+typedef enum {
+  DMA_READ_O,
+  DMA_READ_G,
+  DMA_READ_A,
+  DMA_READ_M,
+  DMA_READ_B
+} DMA_READ;
+//#define I2C_ReadReg(SlaveAddr, ReadAddr, ReadBuf, NumByte) do{\
+//if(NumByte > 1) \
+//  HAL_I2C_Mem_Read(&hi2c2, SlaveAddr, ReadAddr|0x80, 1, ReadBuf, NumByte, SENSOR_FLAG_TIMEOUT);\
+//	else \
+//	  HAL_I2C_Mem_Read(&hi2c2, SlaveAddr, ReadAddr, 1, ReadBuf, NumByte, SENSOR_FLAG_TIMEOUT);\
+//}while(0)
 
 #define I2C_ReadReg(SlaveAddr, ReadAddr, ReadBuf, NumByte) do{\
 if(NumByte > 1) \
-  HAL_I2C_Mem_Read(&hi2c2, SlaveAddr, ReadAddr|0x80, 1, ReadBuf, NumByte, SENSOR_FLAG_TIMEOUT);\
-	else \
-	  HAL_I2C_Mem_Read(&hi2c2, SlaveAddr, ReadAddr, 1, ReadBuf, NumByte, SENSOR_FLAG_TIMEOUT);\
-}while(0)
+while(HAL_I2C_Mem_Read_DMA(&hi2c2, SlaveAddr, ReadAddr|0x80, I2C_MEMADD_SIZE_8BIT, ReadBuf, NumByte) != HAL_OK);\
+  else \
+	while(HAL_I2C_Mem_Read_DMA(&hi2c2, SlaveAddr, ReadAddr, I2C_MEMADD_SIZE_8BIT, ReadBuf, NumByte) != HAL_OK);\
+  }while(0)
 
-//#define I2C_ReadReg(SlaveAddr, ReadAddr, ReadBuf, NumByte) do{\
-//if(NumByte > 1) \
-//while(HAL_I2C_Mem_Read_DMA(&hi2c2, SlaveAddr, ReadAddr|0x80, I2C_MEMADD_SIZE_8BIT, ReadBuf, NumByte) != HAL_OK);\
-//  else \
-//	while(HAL_I2C_Mem_Read_DMA(&hi2c2, SlaveAddr, ReadAddr, I2C_MEMADD_SIZE_8BIT, ReadBuf, NumByte) != HAL_OK);\
-//  while (HAL_I2C_GetState(&hi2c2) != HAL_I2C_STATE_READY);\
-//  }while(0)
 /* Private variables ---------------------------------------------------------*/
 uint8_t xBuffer[6];
+static float* pGloableGData;
+static float* pGloableAData;
+static float* pGloableMData;
+static float* pGloableBData;
+
+static DMA_READ emDMA_READ = DMA_READ_O;
 /* Private function prototypes -----------------------------------------------*/
+
 
 /* Private functions ---------------------------------------------------------*/
 /**
@@ -131,102 +144,137 @@ HAL_StatusTypeDef Sensor_Init( void )
   return HAL_OK;
 }
 
-void dump_xBuffer()
+static inline void dump_xBuffer()
 {
-  int i = 0;
-  for(i = 0;i < 6;i++)
-  {
-	printf("xBuffer[%d] = %02x\r\n", i, xBuffer[i]);
-  }
+	printf("%d:%02x %02x %02x %02x %02x %02x\r\n", emDMA_READ,
+		   xBuffer[0],
+		   xBuffer[1],
+		   xBuffer[2],
+		   xBuffer[3],
+		   xBuffer[4],
+		   xBuffer[5]
+		   );
 }
 
 /**
-* @brief  Calculate the angular Data rate Gyroscope.
+* @brief  Start Read all Sensors' Data in DMA Mode.
 * @param  pfData : Pointer to the data out.
 * @retval None
 */
 
-void LSM330DLC_GyroReadAngRate (float* pfData)
+void StartReadSensors(float* pfGData, float* pfAData, float* pfMData, float* pfBData)
 {
-  uint8_t i = 0;
-  int16_t RawData[3] = {0};
-  float sensitivity = LSM330DLC_Gyr_Sensitivity_500dps;
+  if(emDMA_READ != DMA_READ_O) return;
+
+  pGloableGData = pfGData;
+  pGloableAData = pfAData;
+  pGloableMData = pfMData;
+  pGloableBData = pfBData;
+
+  emDMA_READ = DMA_READ_G;
   memset(xBuffer, 0, 6);
   I2C_ReadReg(ADDR_LSM330DLC_G, OUT_X_L_G, (uint8_t *)xBuffer, 6);
-//dump_xBuffer();
-  for(i=0; i<3; i++)
-  {
-	RawData[i]=(int16_t)(((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i]);
-  }
-
-  /* divide by sensitivity */
-  for(i=0; i<3; i++)
-  {
-	pfData[i]=(float)RawData[i] * sensitivity;
-  }
-}
-
-/**
-* @brief Read LSM330DLC output register, and calculate the acceleration ACC=(1/SENSITIVITY)* (out_h*256+out_l)/16 (12 bit rappresentation)
-* @param pnData: Pointer to the data out.
-* @retval None
-*/
-
-void LSM330DLC_AcceleroReadAcc(float* pfData)
-{
-  uint8_t i = 0;
-  uint8_t cDivider = 16;
-  int16_t RawData[3] = {0};
-  float sensitivity = LSM330DLC_Acc_Sensitivity_2g;
-  memset(xBuffer, 0, 6);
-  I2C_ReadReg(ADDR_LSM330DLC_A, OUT_X_L_A, (uint8_t *)xBuffer, 6);
-//dump_xBuffer();
-  for(i=0; i<3; i++)
-  {
-	RawData[i]=((int16_t)((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i])/cDivider;
-  }
-
-  /* divide by sensitivity */
-  for(i=0; i<3; i++)
-  {
-	pfData[i]=(float)RawData[i] * sensitivity;
-  }
-}
-
-/**
-* @brief  Calculate the magnetic field Magn.
-* @param  pfData : Pointer to the data out.
-* @retval None
-*/
-
-void LIS3MDL_CompassReadMag (float* pfData)
-{
-  uint8_t i = 0;
-  int16_t RawData[3] = {0};
-  float sensitivity = LIS3MDL_Mag_Sensitivity_4guass;
-  memset(xBuffer, 0, 6);
-  I2C_ReadReg(ADDR_LIS3MDL, OUT_X_L_M, (uint8_t *)xBuffer, 6);
-//dump_xBuffer();
-  for(i=0; i<3; i++)
-  {
-	RawData[i]=(int16_t)(((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i]);
-  }
-
-  /* divide by sensitivity */
-  for(i=0; i<3; i++)
-  {
-	pfData[i]=(float)RawData[i] / sensitivity;
-  }
 }
 
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
 //  printf("%s\n\r", __func__);
+  uint8_t i = 0;
+  uint8_t cDivider = 16;
+  int16_t RawData[3] = {0};
+  float sensitivity = 0.0;
+  LED_BlueOn();
+//  dump_xBuffer();
+
+
+  switch(emDMA_READ)
+  {
+  case DMA_READ_O:
+	{
+	}
+	break;
+  case DMA_READ_G:
+	{
+	  sensitivity = LSM330DLC_Gyr_Sensitivity_500dps;
+	  for(i=0; i<3; i++)
+	  {
+		RawData[i]=(int16_t)(((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i]);
+	  }
+
+	  //start NEXT read A
+	  emDMA_READ = DMA_READ_A;
+	  memset(xBuffer, 0, 6);
+	  I2C_ReadReg(ADDR_LSM330DLC_A, OUT_X_L_A, (uint8_t *)xBuffer, 6);
+
+	  /* divide by sensitivity */
+	  for(i=0; i<3; i++)
+	  {
+		pGloableGData[i]=(float)RawData[i] * sensitivity;
+	  }
+	}
+	break;
+  case DMA_READ_A:
+	{
+	  //Read LSM330DLC output register, and calculate the acceleration
+	  //ACC=(1/SENSITIVITY)* (out_h*256+out_l)/16 (12 bit rappresentation)
+	  sensitivity = LSM330DLC_Acc_Sensitivity_2g;
+	  for(i=0; i<3; i++)
+	  {
+		RawData[i]=((int16_t)((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i])/cDivider;
+	  }
+#ifdef USE_MAGNETOMETER
+	  //start NEXT read M
+	  emDMA_READ = DMA_READ_M;
+	  memset(xBuffer, 0, 6);
+	  I2C_ReadReg(ADDR_LIS3MDL, OUT_X_L_M, (uint8_t *)xBuffer, 6);
+#else
+	  emDMA_READ = DMA_READ_O;
+	  SensorsReadOK();
+#endif
+
+	  /* divide by sensitivity */
+	  for(i=0; i<3; i++)
+	  {
+		pGloableAData[i]=(float)RawData[i] * sensitivity;
+	  }
+	}
+	break;
+  case DMA_READ_M:
+	{
+	  sensitivity = LIS3MDL_Mag_Sensitivity_4guass;
+		for(i=0; i<3; i++)
+		{
+		  RawData[i]=(int16_t)(((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i]);
+		}
+#ifdef USE_BAROMETER
+	  //start NEXT read Barometer
+	  emDMA_READ = DMA_READ_B;
+	  memset(xBuffer, 0, 6);
+	  I2C_ReadReg(ADDR_LPS331AP, PRESS_OUT_L_B, (uint8_t *)xBuffer, 6);
+#else
+	  emDMA_READ = DMA_READ_O;
+	  SensorsReadOK();
+#endif
+
+	  /* divide by sensitivity */
+	  for(i=0; i<3; i++)
+	  {
+		pGloableMData[i]=(float)RawData[i] / sensitivity;
+	  }
+	}
+
+	break;
+  case DMA_READ_B:
+	{
+	}
+	break;
+  }
+  LED_BlueOff();
 }
 
 void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-//  printf("%s\n\r", __func__);
+  printf("%s\n\r", __func__);
 }
 
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
