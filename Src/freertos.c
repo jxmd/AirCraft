@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * File Name          : freertos.c
-  * Date               : 09/04/2015 08:33:58
+  * Date               : 09/04/2015 16:40:09
   * Description        : Code for freertos applications
   ******************************************************************************
   *
@@ -49,6 +49,7 @@
 
 /* Variables -----------------------------------------------------------------*/
 osThreadId defaultTaskHandle;
+osTimerId getSensorDataTimerHandle;
 
 /* USER CODE BEGIN Variables */
 osThreadId sensorTaskHandle;
@@ -59,6 +60,7 @@ osThreadId uartTaskHandle;
 
 /* Function prototypes -------------------------------------------------------*/
 void StartDefaultTask(void const * argument);
+void getSensorDataTimerCallback(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -138,6 +140,7 @@ void vApplicationMallocFailedHook(void)
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
   printf("%s\r\n", __func__);
+  Sensor_Init();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -155,27 +158,26 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* definition and creation of getSensorDataTimer */
+  osTimerDef(getSensorDataTimer, getSensorDataTimerCallback);
+  getSensorDataTimerHandle = osTimerCreate(osTimer(getSensorDataTimer), osTimerPeriodic, NULL);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128+256);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
-  if(defaultTaskHandle == NULL){
-	printf("osThreadCreate defaultTaskHandle Error\r\n");
-	return;
-  }
+//  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 512);
+//  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 
+
   osThreadDef(sensorTask, StartSensorTask, osPriorityNormal, 0, 512);
   sensorTaskHandle = osThreadCreate(osThread(sensorTask), NULL);
-  if(sensorTaskHandle == NULL){
-	printf("osThreadCreate sensorTaskHandle Error\r\n");
-	return;
-  }
 
 //  osThreadDef(bleRecvTask, StartBleRecvTask, osPriorityHigh, 0, 128);
 //  bleRecvTaskHandle = osThreadCreate(osThread(bleRecvTask), NULL);
@@ -196,8 +198,17 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
   printf("%s\r\n", __func__);
-  Sensor_Init();
+
 //  osDelay(1000);
+  /* USER CODE END StartDefaultTask */
+}
+
+/* getSensorDataTimerCallback function */
+void getSensorDataTimerCallback(void const * argument)
+{
+  /* USER CODE BEGIN getSensorDataTimerCallback */
+
+
 #define MoveAveSize 8
   static float Acc_FIFO[3][MoveAveSize] = {0};
   static float Gyr_FIFO[3][MoveAveSize] = {0};
@@ -206,213 +217,203 @@ void StartDefaultTask(void const * argument)
   static float OffsetSum[3] = {0};
   static uint16_t Correction_Time = 0;
   static uint8_t cycle = 0;
-  /* Infinite loop */
-  for(;;)
+  printf("%s cycle:%d\r\n", __func__, cycle);
+  LED_BlueOn();
+  /* Read Gyro data from LSM330DLC */
+  LSM330DLC_GyroReadAngRate(Gyr);
+  printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
+
+  Gyr[0] = Gyr[0] - Gyro_Offset.Offset_X;
+  Gyr[1] = Gyr[1] - Gyro_Offset.Offset_Y;
+  Gyr[2] = Gyr[2] - Gyro_Offset.Offset_Z;
+
+  /* Read Acc data from LSM330DLC */
+  LSM330DLC_AcceleroReadAcc(Acc);
+  //	printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
+
+  Acc[0] = Acc[0] - Acc_Parameter.Acc_Offset.Offset_X;
+  Acc[1] = Acc[1] - Acc_Parameter.Acc_Offset.Offset_Y;
+  Acc[2] = Acc[2] - Acc_Parameter.Acc_Offset.Offset_Z;
+
+  Acc[0] = Acc[0] * Acc_Parameter.Acc_Coupling.K_X      \
+	+ Acc[1] * Acc_Parameter.Acc_Coupling.K_YX     \
+	  + Acc[2] * Acc_Parameter.Acc_Coupling.K_ZX;
+  Acc[1] = Acc[0] * Acc_Parameter.Acc_Coupling.K_XY     \
+	+ Acc[1] * Acc_Parameter.Acc_Coupling.K_Y      \
+	  + Acc[2] * Acc_Parameter.Acc_Coupling.K_ZY;
+  Acc[2] = Acc[0] * Acc_Parameter.Acc_Coupling.K_XZ     \
+	+ Acc[1] * Acc_Parameter.Acc_Coupling.K_YZ     \
+	  + Acc[2] * Acc_Parameter.Acc_Coupling.K_Z;
+
+#ifdef	USE_MAGNETOMETER
+  LIS3MDL_CompassReadMag(Mag);
+
+  //	printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
+
+  Mag[0] = Mag[0] - Mag_Parameter.Mag_Offset.Offset_X;
+  Mag[1] = Mag[1] - Mag_Parameter.Mag_Offset.Offset_Y;
+  Mag[2] = Mag[2] - Mag_Parameter.Mag_Offset.Offset_Z;
+
+  Mag[0] = Mag[0] * Mag_Parameter.Mag_Coupling.K_X      \
+	+ Mag[1] * Mag_Parameter.Mag_Coupling.K_YX     \
+	  + Mag[2] * Mag_Parameter.Mag_Coupling.K_ZX;
+  Mag[1] = Mag[0] * Mag_Parameter.Mag_Coupling.K_XY     \
+	+ Mag[1] * Mag_Parameter.Mag_Coupling.K_Y      \
+	  + Mag[2] * Mag_Parameter.Mag_Coupling.K_ZY;
+  Mag[2] = Mag[0] * Mag_Parameter.Mag_Coupling.K_XZ     \
+	+ Mag[1] * Mag_Parameter.Mag_Coupling.K_YZ     \
+	  + Mag[2] * Mag_Parameter.Mag_Coupling.K_Z;
+  /* Due to IC position in PCB*/
+  //Mag[0] = -Mag[0];
+  //Mag[1] = -Mag[1];
+#endif
+
+  switch(SensorMode)
   {
-	LED_BlueOn();
-	/* Read Gyro data from LSM330DLC */
-	LSM330DLC_GyroReadAngRate(Gyr);
-	printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
-	LED_BlueOff();
+	/************************** Mode_CorrectGyr **************************************/
+  case Mode_GyrCorrect:
 
-	Gyr[0] = Gyr[0] - Gyro_Offset.Offset_X;
-	Gyr[1] = Gyr[1] - Gyro_Offset.Offset_Y;
-	Gyr[2] = Gyr[2] - Gyro_Offset.Offset_Z;
-
-	LED_BlueOn();
-	/* Read Acc data from LSM330DLC */
-	LSM330DLC_AcceleroReadAcc(Acc);
-//	printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
-	LED_BlueOff();
-
-	Acc[0] = Acc[0] - Acc_Parameter.Acc_Offset.Offset_X;
-	Acc[1] = Acc[1] - Acc_Parameter.Acc_Offset.Offset_Y;
-	Acc[2] = Acc[2] - Acc_Parameter.Acc_Offset.Offset_Z;
-
-	Acc[0] = Acc[0] * Acc_Parameter.Acc_Coupling.K_X      \
-	  + Acc[1] * Acc_Parameter.Acc_Coupling.K_YX     \
-		+ Acc[2] * Acc_Parameter.Acc_Coupling.K_ZX;
-	Acc[1] = Acc[0] * Acc_Parameter.Acc_Coupling.K_XY     \
-	  + Acc[1] * Acc_Parameter.Acc_Coupling.K_Y      \
-		+ Acc[2] * Acc_Parameter.Acc_Coupling.K_ZY;
-	Acc[2] = Acc[0] * Acc_Parameter.Acc_Coupling.K_XZ     \
-	  + Acc[1] * Acc_Parameter.Acc_Coupling.K_YZ     \
-		+ Acc[2] * Acc_Parameter.Acc_Coupling.K_Z;
-
-#ifdef	USE_MAGNETOMETER
-	LED_BlueOn();
-	LIS3MDL_CompassReadMag(Mag);
-
-//	printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
-	LED_BlueOff();
-
-	Mag[0] = Mag[0] - Mag_Parameter.Mag_Offset.Offset_X;
-	Mag[1] = Mag[1] - Mag_Parameter.Mag_Offset.Offset_Y;
-	Mag[2] = Mag[2] - Mag_Parameter.Mag_Offset.Offset_Z;
-
-	Mag[0] = Mag[0] * Mag_Parameter.Mag_Coupling.K_X      \
-	  + Mag[1] * Mag_Parameter.Mag_Coupling.K_YX     \
-		+ Mag[2] * Mag_Parameter.Mag_Coupling.K_ZX;
-	Mag[1] = Mag[0] * Mag_Parameter.Mag_Coupling.K_XY     \
-	  + Mag[1] * Mag_Parameter.Mag_Coupling.K_Y      \
-		+ Mag[2] * Mag_Parameter.Mag_Coupling.K_ZY;
-	Mag[2] = Mag[0] * Mag_Parameter.Mag_Coupling.K_XZ     \
-	  + Mag[1] * Mag_Parameter.Mag_Coupling.K_YZ     \
-		+ Mag[2] * Mag_Parameter.Mag_Coupling.K_Z;
-	/* Due to IC position in PCB*/
-	//Mag[0] = -Mag[0];
-	//Mag[1] = -Mag[1];
-#endif
-
-	LED_BlueOn();
-	switch(SensorMode)
-	{
-	  /************************** Mode_CorrectGyr **************************************/
-	case Mode_GyrCorrect:
-
-//	  YELLOW_ON;
-	  /* Offset Correction */
+	//	  YELLOW_ON;
+	/* Offset Correction */
 #define GyroSampleSize 64
-	  OffsetSum[0] += Gyr[0];
-	  OffsetSum[1] += Gyr[1];
-	  OffsetSum[2] += Gyr[2];
-	  Correction_Time++;
-	  if(Correction_Time == GyroSampleSize)
-	  {
-		Gyro_Offset.Offset_X = OffsetSum[0] / GyroSampleSize;
-		Gyro_Offset.Offset_Y = OffsetSum[1] / GyroSampleSize;
-		Gyro_Offset.Offset_Z = OffsetSum[2] / GyroSampleSize;
+	OffsetSum[0] += Gyr[0];
+	OffsetSum[1] += Gyr[1];
+	OffsetSum[2] += Gyr[2];
+	Correction_Time++;
+	if(Correction_Time == GyroSampleSize)
+	{
+	  Gyro_Offset.Offset_X = OffsetSum[0] / GyroSampleSize;
+	  Gyro_Offset.Offset_Y = OffsetSum[1] / GyroSampleSize;
+	  Gyro_Offset.Offset_Z = OffsetSum[2] / GyroSampleSize;
 
-		Correction_Time = 0;
-		/* Next Procedure */
-		SensorMode = Mode_AccCorrect;
-	  }
-	  break;
-
-	  /************************** Mode_CorrectAcc **************************************/
-	case Mode_AccCorrect:
-
-	  /* Offset Correction */
-	  Acc_Parameter.Acc_Offset.Offset_X = -0.007970729553635;
-	  Acc_Parameter.Acc_Offset.Offset_Y = 0.019836643844817;
-	  Acc_Parameter.Acc_Offset.Offset_Z = 0.006183107591687;
-	  /* Coupling Correction */
-	  Acc_Parameter.Acc_Coupling.K_X  = 0.970990949467151;
-	  Acc_Parameter.Acc_Coupling.K_Y  = 0.980792462583293;
-	  Acc_Parameter.Acc_Coupling.K_Z  = 0.965535220154680;
-	  Acc_Parameter.Acc_Coupling.K_YX = 0.002437447263339;
-	  Acc_Parameter.Acc_Coupling.K_ZX = 0.014915966356573;
-	  Acc_Parameter.Acc_Coupling.K_XY = 0;
-	  Acc_Parameter.Acc_Coupling.K_ZY = -0.005387874488198;
-	  Acc_Parameter.Acc_Coupling.K_XZ = 0;
-	  Acc_Parameter.Acc_Coupling.K_YZ = 0;
-	  /* Wait until FIFO is filled up */
-	  MoveAve_SMA(Acc[0], Acc_FIFO[0], MoveAveSize);
-	  MoveAve_SMA(Acc[1], Acc_FIFO[1], MoveAveSize);
-	  MoveAve_SMA(Acc[2], Acc_FIFO[2], MoveAveSize);
-	  Correction_Time++;
-	  if (Correction_Time == MoveAveSize+1)	//beacuse the first data is zero
-	  {
-		Correction_Time = 0;
-		/* Next Procedure */
-#ifdef	USE_MAGNETOMETER
-		SensorMode = Mode_MagCorrect;
-#else
-		SensorMode = Mode_Quaternion;
-#endif
-
-	  }
-	  break;
-
-	  /************************** Mode_CorrectMag **************************************/
-#ifdef	USE_MAGNETOMETER
-	case Mode_MagCorrect:
-
-	  /* Offset Correction */
-	  Mag_Parameter.Mag_Offset.Offset_X = 0.347320519123196;
-	  Mag_Parameter.Mag_Offset.Offset_Y = -0.441676977320650;
-	  Mag_Parameter.Mag_Offset.Offset_Z = 0.623926096014853;
-	  /* Coupling Correction */
-	  Mag_Parameter.Mag_Coupling.K_X  = 3.213533040206366;
-	  Mag_Parameter.Mag_Coupling.K_Y  = 3.241421222828024;
-	  Mag_Parameter.Mag_Coupling.K_Z  = 3.215694520594453;
-	  Mag_Parameter.Mag_Coupling.K_YX = 0.081451183121051;
-	  Mag_Parameter.Mag_Coupling.K_ZX = 0.006184918582682;
-	  Mag_Parameter.Mag_Coupling.K_XY = 0;
-	  Mag_Parameter.Mag_Coupling.K_ZY = -0.049199718330043;
-	  Mag_Parameter.Mag_Coupling.K_XZ = 0;
-	  Mag_Parameter.Mag_Coupling.K_YZ = 0;
-	  /* Wait until FIFO is filled up */
-	  MoveAve_SMA(Mag[0], Mag_FIFO[0], MoveAveSize);
-	  MoveAve_SMA(Mag[1], Mag_FIFO[1], MoveAveSize);
-	  MoveAve_SMA(Mag[2], Mag_FIFO[2], MoveAveSize);
-	  Correction_Time++;
-	  if (Correction_Time == MoveAveSize+1)	//beacuse the first data is zero
-	  {
-		Correction_Time = 0;
-		/* Next Procedure */
-		SensorMode = Mode_Quaternion;
-	  }
-	  break;
-#endif
-
-	  /************************** Quaternion Mode **************************************/
-	case Mode_Quaternion:
-
-	  /* Weighted Moving Average */
-	  Acc[0] = MoveAve_WMA(Acc[0], Acc_FIFO[0], MoveAveSize);
-	  Acc[1] = MoveAve_WMA(Acc[1], Acc_FIFO[1], MoveAveSize);
-	  Acc[2] = MoveAve_WMA(Acc[2], Acc_FIFO[2], MoveAveSize);
-#ifdef	USE_MAGNETOMETER
-	  Mag[0] = MoveAve_WMA(Mag[0], Mag_FIFO[0], MoveAveSize);
-	  Mag[1] = MoveAve_WMA(Mag[1], Mag_FIFO[1], MoveAveSize);
-	  Mag[2] = MoveAve_WMA(Mag[2], Mag_FIFO[2], MoveAveSize);
-#endif
-	  AHRS_Init(Acc, Mag, &AngE);
-	  SensorMode = Mode_Algorithm;
-	  break;
-
-	  /************************** Algorithm Mode ****************************************/
-	case Mode_Algorithm:
-
-	  /* Weighted Moving Average */
-	  Gyr[0] = MoveAve_WMA(Gyr[0], Gyr_FIFO[0], MoveAveSize);
-	  Gyr[1] = MoveAve_WMA(Gyr[1], Gyr_FIFO[1], MoveAveSize);
-	  Gyr[2] = MoveAve_WMA(Gyr[2], Gyr_FIFO[2], MoveAveSize);
-	  Acc[0] = MoveAve_WMA(Acc[0], Acc_FIFO[0], MoveAveSize);
-	  Acc[1] = MoveAve_WMA(Acc[1], Acc_FIFO[1], MoveAveSize);
-	  Acc[2] = MoveAve_WMA(Acc[2], Acc_FIFO[2], MoveAveSize);
-
-#ifdef	USE_MAGNETOMETER
-	  Mag[0] = MoveAve_WMA(Mag[0], Mag_FIFO[0], MoveAveSize);
-	  Mag[1] = MoveAve_WMA(Mag[1], Mag_FIFO[1], MoveAveSize);
-	  Mag[2] = MoveAve_WMA(Mag[2], Mag_FIFO[2], MoveAveSize);
-#endif
-	  cycle ++;
-	  if(cycle >= 10){
-		cycle = 0;
-		osSemaphoreRelease(sensorSemaphore);
-	  }
-
-	  break;
+	  Correction_Time = 0;
+	  /* Next Procedure */
+	  SensorMode = Mode_AccCorrect;
 	}
-	LED_BlueOff();
-    osDelay(2);
-//	printf("%s\r\n", __func__);
+	break;
+
+	/************************** Mode_CorrectAcc **************************************/
+  case Mode_AccCorrect:
+
+	/* Offset Correction */
+	Acc_Parameter.Acc_Offset.Offset_X = -0.007970729553635;
+	Acc_Parameter.Acc_Offset.Offset_Y = 0.019836643844817;
+	Acc_Parameter.Acc_Offset.Offset_Z = 0.006183107591687;
+	/* Coupling Correction */
+	Acc_Parameter.Acc_Coupling.K_X  = 0.970990949467151;
+	Acc_Parameter.Acc_Coupling.K_Y  = 0.980792462583293;
+	Acc_Parameter.Acc_Coupling.K_Z  = 0.965535220154680;
+	Acc_Parameter.Acc_Coupling.K_YX = 0.002437447263339;
+	Acc_Parameter.Acc_Coupling.K_ZX = 0.014915966356573;
+	Acc_Parameter.Acc_Coupling.K_XY = 0;
+	Acc_Parameter.Acc_Coupling.K_ZY = -0.005387874488198;
+	Acc_Parameter.Acc_Coupling.K_XZ = 0;
+	Acc_Parameter.Acc_Coupling.K_YZ = 0;
+	/* Wait until FIFO is filled up */
+	MoveAve_SMA(Acc[0], Acc_FIFO[0], MoveAveSize);
+	MoveAve_SMA(Acc[1], Acc_FIFO[1], MoveAveSize);
+	MoveAve_SMA(Acc[2], Acc_FIFO[2], MoveAveSize);
+	Correction_Time++;
+	if (Correction_Time == MoveAveSize+1)	//beacuse the first data is zero
+	{
+	  Correction_Time = 0;
+	  /* Next Procedure */
+#ifdef	USE_MAGNETOMETER
+	  SensorMode = Mode_MagCorrect;
+#else
+	  SensorMode = Mode_Quaternion;
+#endif
+
+	}
+	break;
+
+	/************************** Mode_CorrectMag **************************************/
+#ifdef	USE_MAGNETOMETER
+  case Mode_MagCorrect:
+
+	/* Offset Correction */
+	Mag_Parameter.Mag_Offset.Offset_X = 0.347320519123196;
+	Mag_Parameter.Mag_Offset.Offset_Y = -0.441676977320650;
+	Mag_Parameter.Mag_Offset.Offset_Z = 0.623926096014853;
+	/* Coupling Correction */
+	Mag_Parameter.Mag_Coupling.K_X  = 3.213533040206366;
+	Mag_Parameter.Mag_Coupling.K_Y  = 3.241421222828024;
+	Mag_Parameter.Mag_Coupling.K_Z  = 3.215694520594453;
+	Mag_Parameter.Mag_Coupling.K_YX = 0.081451183121051;
+	Mag_Parameter.Mag_Coupling.K_ZX = 0.006184918582682;
+	Mag_Parameter.Mag_Coupling.K_XY = 0;
+	Mag_Parameter.Mag_Coupling.K_ZY = -0.049199718330043;
+	Mag_Parameter.Mag_Coupling.K_XZ = 0;
+	Mag_Parameter.Mag_Coupling.K_YZ = 0;
+	/* Wait until FIFO is filled up */
+	MoveAve_SMA(Mag[0], Mag_FIFO[0], MoveAveSize);
+	MoveAve_SMA(Mag[1], Mag_FIFO[1], MoveAveSize);
+	MoveAve_SMA(Mag[2], Mag_FIFO[2], MoveAveSize);
+	Correction_Time++;
+	if (Correction_Time == MoveAveSize+1)	//beacuse the first data is zero
+	{
+	  Correction_Time = 0;
+	  /* Next Procedure */
+	  SensorMode = Mode_Quaternion;
+	}
+	break;
+#endif
+
+	/************************** Quaternion Mode **************************************/
+  case Mode_Quaternion:
+
+	/* Weighted Moving Average */
+	Acc[0] = MoveAve_WMA(Acc[0], Acc_FIFO[0], MoveAveSize);
+	Acc[1] = MoveAve_WMA(Acc[1], Acc_FIFO[1], MoveAveSize);
+	Acc[2] = MoveAve_WMA(Acc[2], Acc_FIFO[2], MoveAveSize);
+#ifdef	USE_MAGNETOMETER
+	Mag[0] = MoveAve_WMA(Mag[0], Mag_FIFO[0], MoveAveSize);
+	Mag[1] = MoveAve_WMA(Mag[1], Mag_FIFO[1], MoveAveSize);
+	Mag[2] = MoveAve_WMA(Mag[2], Mag_FIFO[2], MoveAveSize);
+#endif
+	AHRS_Init(Acc, Mag, &AngE);
+	SensorMode = Mode_Algorithm;
+	break;
+
+	/************************** Algorithm Mode ****************************************/
+  case Mode_Algorithm:
+
+	/* Weighted Moving Average */
+	Gyr[0] = MoveAve_WMA(Gyr[0], Gyr_FIFO[0], MoveAveSize);
+	Gyr[1] = MoveAve_WMA(Gyr[1], Gyr_FIFO[1], MoveAveSize);
+	Gyr[2] = MoveAve_WMA(Gyr[2], Gyr_FIFO[2], MoveAveSize);
+	Acc[0] = MoveAve_WMA(Acc[0], Acc_FIFO[0], MoveAveSize);
+	Acc[1] = MoveAve_WMA(Acc[1], Acc_FIFO[1], MoveAveSize);
+	Acc[2] = MoveAve_WMA(Acc[2], Acc_FIFO[2], MoveAveSize);
+
+#ifdef	USE_MAGNETOMETER
+	Mag[0] = MoveAve_WMA(Mag[0], Mag_FIFO[0], MoveAveSize);
+	Mag[1] = MoveAve_WMA(Mag[1], Mag_FIFO[1], MoveAveSize);
+	Mag[2] = MoveAve_WMA(Mag[2], Mag_FIFO[2], MoveAveSize);
+#endif
+	cycle ++;
+	if(cycle >= 10){
+	  cycle = 0;
+	  osSemaphoreRelease(sensorSemaphore);
+	}
+
+	break;
   }
-  /* USER CODE END StartDefaultTask */
+  LED_BlueOff();
+  /* USER CODE END getSensorDataTimerCallback */
 }
 
 /* USER CODE BEGIN Application */
 void StartSensorTask(void const * argument)
 {
-
   /* USER CODE BEGIN StartDefaultTask */
-  printf("%s\r\n", __func__);
+
+  osTimerStart(getSensorDataTimerHandle, 1000 / 100);
   /* Infinite loop */
   for(;;)
   {
-	if(osSemaphoreWait(sensorSemaphore, 0) > 0){
+	printf("%s\r\n", __func__);
+	if(osSemaphoreWait(sensorSemaphore, 1000) > 0){
 	  LED_RedOn();
 	  AHRS_Update(Gyr, Acc, Mag, &AngE);
 	  printf("+ AngE.Roll:%f\tAngE.Pitch:%f\tAngE.Yaw:%f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
