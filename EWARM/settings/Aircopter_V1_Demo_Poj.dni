@@ -1,5 +1,5 @@
 [Stack]
-FillEnabled=0
+FillEnabled=1
 OverflowWarningsEnabled=1
 WarningThreshold=90
 SpWarningsEnabled=1
@@ -9,7 +9,7 @@ TriggerName=main
 LimitSize=0
 ByteLimit=50
 [DebugChecksum]
-Checksum=1011172612
+Checksum=-1561757264
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -28,9 +28,9 @@ JtagSpeed=2000000
 Prescaler=36
 TimeStampPrescIndex=0
 TimeStampPrescData=0
-PcSampCYCTAP=1
-PcSampPOSTCNT=15
-PcSampIndex=0
+PcSampCYCTAP=0
+PcSampPOSTCNT=0
+PcSampIndex=31
 DataLogMode=0
 ITMportsEnable=0
 ITMportsTermIO=0
@@ -46,6 +46,12 @@ DisableInterrupts=0
 MultiCoreRunAll=0
 [ArmDriver]
 EnableCache=1
+[RegisterFilter]
+FilePath=_ ""
+UseFilter=_ 0
+[Trace2]
+Enabled=0
+ShowSource=0
 [SWOTraceWindow]
 PcSampling=0
 InterruptLogs=0
@@ -54,7 +60,7 @@ EventCPI=0
 EventEXC=0
 EventFOLD=0
 EventLSU=0
-EventSLEEP=0
+EventSLEEP=1
 [DataLog]
 LogEnabled=0
 SumEnabled=0
@@ -68,25 +74,27 @@ GraphEnabled=0
 ShowTimeLog=1
 ShowTimeSum=1
 SumSortOrder=0
+[Disassemble mode]
+mode=0
+[Breakpoints2]
+Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Src\freertos.c}.418.4" 0 0 1 "" 0 "" 0
+Bp1=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Src\main.c}.109.3" 0 0 1 "" 0 "" 0
+Count=2
 [Log file]
-LoggingEnabled=_ 0
-LogFile=_ ""
+LoggingEnabled=_ 1
+LogFile=_ "$PROJ_DIR$\LogFile1.log"
 Category=_ 0
 [TermIOLog]
 LoggingEnabled=_ 0
 LogFile=_ ""
+[Aliases]
+Count=0
+SuppressDialog=0
 [CallStackLog]
 Enabled=0
 [DriverProfiling]
-Enabled=0
+Enabled=1
 Mode=3
 Graph=0
 Symbiont=0
 Exclusions=
-[Disassemble mode]
-mode=0
-[Breakpoints2]
-Count=0
-[Aliases]
-Count=0
-SuppressDialog=0

@@ -62,7 +62,6 @@ extern UART_HandleTypeDef huart3;
 void SysTick_Handler(void)
 {
   HAL_IncTick();
-  LED_BlueToggle();
   if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
     xPortSysTickHandler();
   }

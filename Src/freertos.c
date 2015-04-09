@@ -37,10 +37,11 @@
 #include "task.h"
 #include "cmsis_os.h"
 
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "i2c2_sensors.h"
 #include "algorithm_ahrs.h"
+#include "algorithm_moveAve.h"
 #include "tim2_motor.h"
 #include "usart3_ble.h"
 #include "leds.h"
@@ -51,6 +52,7 @@ osThreadId defaultTaskHandle;
 
 /* USER CODE BEGIN Variables */
 osThreadId sensorTaskHandle;
+osSemaphoreId sensorSemaphore;
 osThreadId bleRecvTaskHandle;
 osThreadId uartTaskHandle;
 /* USER CODE END Variables */
@@ -144,6 +146,13 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
+  osSemaphoreDef(sensorSemaphore);
+  sensorSemaphore = osSemaphoreCreate(osSemaphore(sensorSemaphore), 1);
+  if(sensorSemaphore == NULL){
+	printf("osSemaphoreCreate Error\r\n");
+	return;
+  }
+
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -152,15 +161,22 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128+256);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
-
+  if(defaultTaskHandle == NULL){
+	printf("osThreadCreate defaultTaskHandle Error\r\n");
+	return;
+  }
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 
-//  osThreadDef(sensorTask, StartSensorTask, osPriorityHigh, 0, 128);
-//  sensorTaskHandle = osThreadCreate(osThread(sensorTask), NULL);
-//
+  osThreadDef(sensorTask, StartSensorTask, osPriorityNormal, 0, 512);
+  sensorTaskHandle = osThreadCreate(osThread(sensorTask), NULL);
+  if(sensorTaskHandle == NULL){
+	printf("osThreadCreate sensorTaskHandle Error\r\n");
+	return;
+  }
+
 //  osThreadDef(bleRecvTask, StartBleRecvTask, osPriorityHigh, 0, 128);
 //  bleRecvTaskHandle = osThreadCreate(osThread(bleRecvTask), NULL);
 //
@@ -193,17 +209,21 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+	LED_BlueOn();
 	/* Read Gyro data from LSM330DLC */
 	LSM330DLC_GyroReadAngRate(Gyr);
 	printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
+	LED_BlueOff();
 
 	Gyr[0] = Gyr[0] - Gyro_Offset.Offset_X;
 	Gyr[1] = Gyr[1] - Gyro_Offset.Offset_Y;
 	Gyr[2] = Gyr[2] - Gyro_Offset.Offset_Z;
 
+	LED_BlueOn();
 	/* Read Acc data from LSM330DLC */
 	LSM330DLC_AcceleroReadAcc(Acc);
-	printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
+//	printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
+	LED_BlueOff();
 
 	Acc[0] = Acc[0] - Acc_Parameter.Acc_Offset.Offset_X;
 	Acc[1] = Acc[1] - Acc_Parameter.Acc_Offset.Offset_Y;
@@ -220,9 +240,11 @@ void StartDefaultTask(void const * argument)
 		+ Acc[2] * Acc_Parameter.Acc_Coupling.K_Z;
 
 #ifdef	USE_MAGNETOMETER
+	LED_BlueOn();
 	LIS3MDL_CompassReadMag(Mag);
 
-	printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
+//	printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
+	LED_BlueOff();
 
 	Mag[0] = Mag[0] - Mag_Parameter.Mag_Offset.Offset_X;
 	Mag[1] = Mag[1] - Mag_Parameter.Mag_Offset.Offset_Y;
@@ -242,6 +264,7 @@ void StartDefaultTask(void const * argument)
 	//Mag[1] = -Mag[1];
 #endif
 
+	LED_BlueOn();
 	switch(SensorMode)
 	{
 	  /************************** Mode_CorrectGyr **************************************/
@@ -368,15 +391,13 @@ void StartDefaultTask(void const * argument)
 	  cycle ++;
 	  if(cycle >= 10){
 		cycle = 0;
-		AHRS_Update(Gyr, Acc, Mag, &AngE);
-		//EullerReport(&AngE);
-		//Control_Angle(&AngE,&expect);
-		//Control_Gyro(Gyr);
+		osSemaphoreRelease(sensorSemaphore);
 	  }
 
 	  break;
 	}
-    osDelay(20);
+	LED_BlueOff();
+    osDelay(2);
 //	printf("%s\r\n", __func__);
   }
   /* USER CODE END StartDefaultTask */
@@ -387,10 +408,21 @@ void StartSensorTask(void const * argument)
 {
 
   /* USER CODE BEGIN StartDefaultTask */
+  printf("%s\r\n", __func__);
   /* Infinite loop */
   for(;;)
   {
-    AHRS_Update(Gyr, Acc, Mag, &AngE);
+	if(osSemaphoreWait(sensorSemaphore, 0) > 0){
+	  LED_RedOn();
+	  AHRS_Update(Gyr, Acc, Mag, &AngE);
+	  printf("+ AngE.Roll:%f\tAngE.Pitch:%f\tAngE.Yaw:%f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
+	  //EullerReport(&AngE);
+	  //Control_Angle(&AngE,&expect);
+	  //Control_Gyro(Gyr);
+	  LED_RedOff();
+	}
+	else{
+	}
   }
   /* USER CODE END StartDefaultTask */
 }
