@@ -62,7 +62,7 @@
 /**
   ******************************************************************************
   * File Name          : FreeRTOSConfig.h
-  * Date               : 08/04/2015 16:04:57
+  * Date               : 09/04/2015 08:33:57
   ******************************************************************************
   */
 
@@ -89,10 +89,6 @@
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
     #include <stdint.h>
     extern uint32_t SystemCoreClock;
-/* USER CODE BEGIN 0 */   	      
-    extern void configureTimerForRunTimeStats(void);
-    extern unsigned long getRunTimeCounterValue(void);  
-/* USER CODE END 0 */       
 #endif
 
 #define configUSE_PREEMPTION                     1
@@ -112,7 +108,6 @@
 #define configUSE_RECURSIVE_MUTEXES              1
 #define configUSE_MALLOC_FAILED_HOOK             1
 #define configUSE_COUNTING_SEMAPHORES            1
-#define configGENERATE_RUN_TIME_STATS            1
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES                    0
@@ -168,12 +163,6 @@ standard names. */
 /* IMPORTANT: This define MUST be commented when used with STM32Cube firmware, 
               to prevent overwriting SysTick_Handler defined within STM32Cube HAL */
 /* #define xPortSysTickHandler SysTick_Handler */
-
-/* USER CODE BEGIN 2 */    
-/* Definitions needed when configGENERATE_RUN_TIME_STATS is on */
-#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS configureTimerForRunTimeStats
-#define portGET_RUN_TIME_COUNTER_VALUE getRunTimeCounterValue    
-/* USER CODE END 2 */
 
 /* USER CODE BEGIN Defines */   	      
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */

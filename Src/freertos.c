@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * File Name          : freertos.c
-  * Date               : 08/04/2015 16:04:57
+  * Date               : 09/04/2015 08:33:58
   * Description        : Code for freertos applications
   ******************************************************************************
   *
@@ -37,7 +37,7 @@
 #include "task.h"
 #include "cmsis_os.h"
 
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN Includes */     
 #include <stdio.h>
 #include "i2c2_sensors.h"
 #include "algorithm_ahrs.h"
@@ -72,25 +72,10 @@ void StartUartTask(void const * argument);
 void EullerReport(EulerAngle* pAngE);
 /* USER CODE END FunctionPrototypes */
 /* Hook prototypes */
-void configureTimerForRunTimeStats(void);
-unsigned long getRunTimeCounterValue(void);
 void vApplicationIdleHook(void);
 void vApplicationTickHook(void);
 void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName);
 void vApplicationMallocFailedHook(void);
-
-/* USER CODE BEGIN 1 */
-/* Functions needed when configGENERATE_RUN_TIME_STATS is on */
-void configureTimerForRunTimeStats(void)
-{
-
-}
-
-unsigned long getRunTimeCounterValue(void)
-{
-return 0;
-}
-/* USER CODE END 1 */
 
 /* USER CODE BEGIN 2 */
 void vApplicationIdleHook( void )

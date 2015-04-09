@@ -40,6 +40,7 @@
 /* USER CODE BEGIN 0 */
 #include "usart3_ble.h"
 #include "stdio.h"
+#include "leds.h"
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -61,6 +62,7 @@ extern UART_HandleTypeDef huart3;
 void SysTick_Handler(void)
 {
   HAL_IncTick();
+  LED_BlueToggle();
   if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
     xPortSysTickHandler();
   }
