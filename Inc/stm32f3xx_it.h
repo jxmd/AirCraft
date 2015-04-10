@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    stm32f3xx_it.h
-  * @date    10/04/2015 11:10:13
+  * @date    10/04/2015 16:29:24
   * @brief   This file contains the headers of the interrupt handlers.
   ******************************************************************************
   *
@@ -49,8 +49,10 @@
 void DMA1_Channel4_IRQHandler(void);
 void DMA1_Channel3_IRQHandler(void);
 void SysTick_Handler(void);
+void USART3_IRQHandler(void);
 void DMA1_Channel5_IRQHandler(void);
 void DMA1_Channel2_IRQHandler(void);
+void USART1_IRQHandler(void);
 
 #ifdef __cplusplus
 }
