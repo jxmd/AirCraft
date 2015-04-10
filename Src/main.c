@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * File Name          : main.c
-  * Date               : 02/04/2015 18:01:31
+  * Date               : 10/04/2015 11:15:04
   * Description        : Main program body
   ******************************************************************************
   *
@@ -38,12 +38,13 @@
 #include "dma.h"
 #include "i2c.h"
 #include "tim.h"
-#include "usart1_dbg.h"
+#include "usart.h"
 #include "gpio.h"
-#include "usart3_ble.h"
 
 /* USER CODE BEGIN Includes */
 #include "i2c2_sensors.h"
+#include "usart3_ble.h"
+#include "usart1_dbg.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -105,7 +106,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   USART_DBG_Init();
 
-  //BLE_Init();
+//  BLE_Init();
   printf("Peripherals init OK!\r\n");
   /* USER CODE END 2 */
 
@@ -114,7 +115,7 @@ int main(void)
 
   /* Start scheduler */
   osKernelStart(NULL, NULL);
-
+  
   /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
@@ -122,7 +123,7 @@ int main(void)
   while (1)
   {
   /* USER CODE END WHILE */
-	printf("We should never get here\r\n");
+
   /* USER CODE BEGIN 3 */
 
   }
@@ -234,10 +235,10 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 /**
   * @}
-  */
+  */ 
 
 /**
   * @}
-*/
+*/ 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

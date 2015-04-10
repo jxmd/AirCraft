@@ -183,7 +183,6 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
   uint8_t cDivider = 16;
   int16_t RawData[3] = {0};
   float sensitivity = 0.0;
-  LED_BlueOn();
 //  dump_xBuffer();
 
 
@@ -269,7 +268,6 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 	}
 	break;
   }
-  LED_BlueOff();
 }
 
 void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)

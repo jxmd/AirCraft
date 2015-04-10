@@ -6,6 +6,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 #include "gpio.h"
+#include "my_free_rtos.h"
 #include <stdio.h>
 /* Exported types ------------------------------------------------------------*/
 struct _Command_Packet{
@@ -83,8 +84,7 @@ extern Command_Packet gCommand_Packet;
 void BLE_Init( void );
 void BLE_BroadCast_Enable( uint8_t enable );
 void BLE_Input_Enable( uint8_t enable );
-void BLE_Power_Reset( void );
+void BLE_Power_Enable( uint8_t enable );
 void BLE_Mode( uint8_t mode );
 void BLE_StartRead(void);
-void BLE_ReadOK(void);
 #endif

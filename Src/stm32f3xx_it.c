@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    stm32f3xx_it.c
-  * @date    02/04/2015 18:01:30
+  * @date    10/04/2015 11:10:13
   * @brief   Interrupt Service Routines.
   ******************************************************************************
   *
@@ -38,7 +38,6 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
-#include "usart3_ble.h"
 #include "stdio.h"
 #include "leds.h"
 /* USER CODE END 0 */
@@ -49,11 +48,9 @@ extern DMA_HandleTypeDef hdma_i2c2_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart3_rx;
 extern DMA_HandleTypeDef hdma_usart3_tx;
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart3;
 
 /******************************************************************************/
-/*            Cortex-M4 Processor Interruption and Exception Handlers         */
+/*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
 /******************************************************************************/
 
 /**
@@ -98,24 +95,8 @@ void DMA1_Channel3_IRQHandler(void)
   /* USER CODE END DMA1_Channel3_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_usart3_rx);
   /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
-  BLE_ReadOK();
+
   /* USER CODE END DMA1_Channel3_IRQn 1 */
-}
-
-/**
-* @brief This function handles USART3 global interrupt / USART3 wake-up interrupt through EXT line 28.
-*/
-void USART3_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART3_IRQn 0 */
-  printf("123");
-  BLE_StartRead();
-
-  /* USER CODE END USART3_IRQn 0 */
-  HAL_UART_IRQHandler(&huart3);
-  /* USER CODE BEGIN USART3_IRQn 1 */
-
-  /* USER CODE END USART3_IRQn 1 */
 }
 
 /**
@@ -144,20 +125,6 @@ void DMA1_Channel2_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel2_IRQn 1 */
 
   /* USER CODE END DMA1_Channel2_IRQn 1 */
-}
-
-/**
-* @brief This function handles USART1 global interrupt / USART1 wake-up interrupt through EXT line 25.
-*/
-void USART1_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART1_IRQn 0 */
-
-  /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
-  /* USER CODE BEGIN USART1_IRQn 1 */
-
-  /* USER CODE END USART1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

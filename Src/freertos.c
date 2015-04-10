@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * File Name          : freertos.c
-  * Date               : 09/04/2015 19:55:02
+  * Date               : 10/04/2015 11:15:01
   * Description        : Code for freertos applications
   ******************************************************************************
   *
@@ -57,6 +57,7 @@ osThreadId sensorTaskHandle;
 osSemaphoreId sensorSemaphore;
 osSemaphoreId sensorOKSemaphore;
 osThreadId bleRecvTaskHandle;
+osSemaphoreId bleRecvOKSemaphore;
 osThreadId uartTaskHandle;
 /* USER CODE END Variables */
 
@@ -161,6 +162,12 @@ void MX_FREERTOS_Init(void) {
 	return;
   }
 
+  osSemaphoreDef(bleRecvOKSemaphore);
+  bleRecvOKSemaphore = osSemaphoreCreate(osSemaphore(bleRecvOKSemaphore), 1);
+  if(bleRecvOKSemaphore == NULL){
+	printf("osSemaphoreCreate bleRecvOKSemaphore Error\r\n");
+	return;
+  }
 
   /* USER CODE END RTOS_SEMAPHORES */
 
@@ -185,9 +192,9 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(sensorTask, StartSensorTask, osPriorityNormal, 0, 512);
   sensorTaskHandle = osThreadCreate(osThread(sensorTask), NULL);
 
-//  osThreadDef(bleRecvTask, StartBleRecvTask, osPriorityHigh, 0, 128);
-//  bleRecvTaskHandle = osThreadCreate(osThread(bleRecvTask), NULL);
-//
+  osThreadDef(bleRecvTask, StartBleRecvTask, osPriorityNormal, 0, 128);
+  bleRecvTaskHandle = osThreadCreate(osThread(bleRecvTask), NULL);
+
 //  osThreadDef(uartTask, StartUartTask, osPriorityNormal, 0, 128);
 //  uartTaskHandle = osThreadCreate(osThread(uartTask), NULL);
 
@@ -223,7 +230,7 @@ void getSensorDataTimerCallback(void const * argument)
   static float OffsetSum[3] = {0};
   static uint16_t Correction_Time = 0;
   static uint8_t cycle = 0;
-//  printf("%s cycle:%d\r\n", __func__, cycle);
+//  printf("%s\r\n", __func__);
 
   StartReadSensors(Gyr,
 						Acc,
@@ -425,6 +432,7 @@ void SensorsReadOK()
 void StartSensorTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+  printf("%s\r\n", __func__);
 
   osTimerStart(getSensorDataTimerHandle, 1000 / 500);
   /* Infinite loop */
@@ -434,7 +442,7 @@ void StartSensorTask(void const * argument)
 	  LED_RedOn();
 	  AHRS_Update(Gyr, Acc, Mag, &AngE);
 	  //printf("+ AngE.Roll:%f\tAngE.Pitch:%f\tAngE.Yaw:%f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
-	  EullerReport(&AngE);
+	  //EullerReport(&AngE);
 	  //Control_Angle(&AngE,&expect);
 	  //Control_Gyro(Gyr);
 	  LED_RedOff();
@@ -445,10 +453,16 @@ void StartSensorTask(void const * argument)
   /* USER CODE END StartDefaultTask */
 }
 
+void BLERecvOK()
+{
+  osSemaphoreRelease(bleRecvOKSemaphore);
+}
+
 void StartBleRecvTask(void const * argument)
 {
 
   /* USER CODE BEGIN StartDefaultTask */
+  printf("%s\r\n", __func__);
   /* Infinite loop */
 //  Motor_Out(500,0,0,0);
 //  osDelay(2000);
@@ -459,11 +473,21 @@ void StartBleRecvTask(void const * argument)
 //  Motor_Out(0,0,0,500);
 //  osDelay(2000);
 //  Motor_Out(0,0,0,0);
+  BLE_Mode( 0 );
+  BLE_Power_Enable( 0 );
+  osDelay(1);
+  BLE_Power_Enable( 1 );
+  osDelay(1);
+  BLE_BroadCast_Enable( 1 );
+  //BLE_Input_Enable(1);
   for(;;)
   {
-	osDelay(200);
-	//BLE_StartRead();
-//	printf("%s\r\n", __func__);
+	BLE_StartRead();
+	if(osSemaphoreWait(bleRecvOKSemaphore, 1000) == 0)
+	{
+	  printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
+			 gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);
+	}
   }
   /* USER CODE END StartDefaultTask */
 }

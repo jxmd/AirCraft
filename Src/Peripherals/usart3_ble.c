@@ -50,16 +50,18 @@ void BLE_Mode( uint8_t mode )
 
 /**
 * @brief  Reset Power.
-* @param  None
+* @param  0 disable;other enable
 * @retval None
 */
 
-void BLE_Power_Reset( void )
+void BLE_Power_Enable( uint8_t enable )
 {
-	//reset
-	GPIO_ResetBits(BLE_RES_GPIO_PORT, BLE_RES_PIN);
-	//resume
+  if(enable){
 	GPIO_SetBits(BLE_RES_GPIO_PORT, BLE_RES_PIN);
+  }
+  else{
+	GPIO_ResetBits(BLE_RES_GPIO_PORT, BLE_RES_PIN);
+  }
 }
 
 /**
@@ -102,7 +104,7 @@ void BLE_Input_Enable( uint8_t enable )
 
 void BLE_StartRead(void)
 {
-  printf("**\r\n");
+  HAL_UART_DMAStop(&huart3);
   while(HAL_UART_Receive_DMA(&huart3, (uint8_t*)&gCommand_Packet, sizeof(gCommand_Packet)) != HAL_OK);
 }
 
@@ -111,9 +113,9 @@ void BLE_StartRead(void)
 * @param  None
 * @retval None
 */
-
-void BLE_ReadOK(void)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
-			 gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);
+  //printf("c %d s %d\r\n", huart->RxXferCount, huart->RxXferSize);
+  LED_BlueToggle();
+  BLERecvOK();
 }

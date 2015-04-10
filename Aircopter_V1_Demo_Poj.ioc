@@ -1,5 +1,5 @@
 #MicroXplorer Configuration settings - do not modify
-#Thu Apr 09 19:55:17 CST 2015
+#Fri Apr 10 11:15:13 CST 2015
 Dma.I2C2_RX.3.Direction=DMA_PERIPH_TO_MEMORY
 Dma.I2C2_RX.3.Instance=DMA1_Channel5
 Dma.I2C2_RX.3.MemDataAlignment=DMA_MDATAALIGN_BYTE
@@ -55,8 +55,7 @@ File.Version=5
 I2C2.I2C_Fall_Time=80
 I2C2.I2C_Rise_Time=100
 I2C2.I2C_Speed_Mode=I2C_Fast
-I2C2.IPParameters=I2C_Speed_Mode,I2C_Fall_Time,I2C_Rise_Time,Timing
-I2C2.Timing=0x0010020A
+I2C2.IPParameters=I2C_Speed_Mode,I2C_Fall_Time,I2C_Rise_Time
 KeepUserPlacement=false
 Mcu.Family=STM32F3
 Mcu.IP0=DMA
@@ -103,8 +102,6 @@ NVIC.DMA1_Channel4_IRQn=true\:5\:0\:false
 NVIC.DMA1_Channel5_IRQn=true\:5\:0\:false
 NVIC.PriorityGroup=NVIC_PRIORITYGROUP_4
 NVIC.SysTick_IRQn=true\:0\:0\:false
-NVIC.USART1_IRQn=true\:5\:0\:false
-NVIC.USART3_IRQn=true\:5\:0\:false
 PA0.GPIOParameters=GPIO_Speed,GPIO_ModeDefaultPP,GPIO_PuPd
 PA0.GPIO_ModeDefaultPP=GPIO_MODE_AF_PP
 PA0.GPIO_PuPd=GPIO_NOPULL
