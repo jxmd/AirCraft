@@ -7,6 +7,7 @@
 #include "usart_buffer.h"
 #include "usart.h"
 #include <stdio.h>
+#include <stdlib.h>
 /* Exported types ------------------------------------------------------------*/
 /* Exported define -----------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

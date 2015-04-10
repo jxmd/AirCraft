@@ -106,7 +106,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   USART_DBG_Init();
 
-//  BLE_Init();
+  BLE_Init();
   printf("Peripherals init OK!\r\n");
   /* USER CODE END 2 */
 
@@ -115,7 +115,7 @@ int main(void)
 
   /* Start scheduler */
   osKernelStart(NULL, NULL);
-  
+
   /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
@@ -235,10 +235,10 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 /**
   * @}
-  */ 
+  */
 
 /**
   * @}
-*/ 
+*/
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

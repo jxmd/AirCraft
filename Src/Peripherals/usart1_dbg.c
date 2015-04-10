@@ -9,9 +9,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+#define TXBUFFER_SIZE 512
 /* Private variables ---------------------------------------------------------*/
 static uint16_t volatile STATE = 0;
 static uint16_t volatile USART1_IS_INITED = 0;
+static uint8_t arrayDMABuffer[TXBUFFER_SIZE] = {0};
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -24,7 +26,7 @@ static uint16_t volatile USART1_IS_INITED = 0;
 
 void USART_DBG_Init( void )
 {
-  UartTxRxBuf_Reg(COM1, BUFFER_TX, 1024);
+  UartTxRxBuf_Reg(COM1, BUFFER_TX, TXBUFFER_SIZE);
   USART1_IS_INITED = 1;
 }
 
@@ -37,24 +39,33 @@ void USART_DBG_Init( void )
 void USART_DBG_Send(uint8_t ch)
 {
   if(!USART1_IS_INITED) return;
-  uint8_t c = 0;
   Uart_Put_Char(COM1, ch);
+
   if(STATE == 0){
-	c = Uart_Get_Char_HW(COM1);
-	HAL_UART_Transmit_IT(&huart1, &c, 1);
-	STATE = 1;
+	uint16_t count = Uart_Get_TXSize_HW(COM1);
+	uint16_t i = 0;
+	if(count){
+	  for(i = 0;i < count;i++)
+	  {
+		arrayDMABuffer[i] = Uart_Get_Char_HW(COM1);
+	  }
+	  HAL_UART_Transmit_DMA(&huart1, arrayDMABuffer, count);
+	}
   }
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-  uint8_t c = 0;
-  if(Uart_Get_TXSize_HW(COM1)!=0){
-	c = Uart_Get_Char_HW(COM1);
-	HAL_UART_Transmit_IT(&huart1, &c, 1);
+  uint16_t count = Uart_Get_TXSize_HW(COM1);
+  uint16_t i = 0;
+  if(count){
+	for(i = 0;i < count;i++)
+	{
+	  arrayDMABuffer[i] = Uart_Get_Char_HW(COM1);
+	}
+	HAL_UART_Transmit_DMA(&huart1, arrayDMABuffer, count);
   }
   else{
 	STATE = 0;
   }
-
 }
