@@ -61,7 +61,7 @@ HAL_StatusTypeDef Sensor_Init( void )
   {
 	{0x00, CTRL_REG2_G},
 	{0x00, CTRL_REG3_G},	// Disable Interrupt
-	{0x20, CTRL_REG4_G},	// FS: +-500dps, BlockData_Update: Continous, Endianness: Little Endian
+	{0x10, CTRL_REG4_G},	// FS: +-500dps, BlockData_Update: Continous, Endianness: Little Endian
 	{0x08, CTRL_REG5_G},	// LPF1 -> LPF2 -> DataReg
 	{0xCF, CTRL_REG1_G},	// ODR: 100Hz, BW: 30Hz, PowerMode: Normal, Axes: X/Y/Z Enable
   };

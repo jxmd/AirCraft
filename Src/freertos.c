@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * File Name          : freertos.c
-  * Date               : 10/04/2015 11:15:01
+  * Date               : 10/04/2015 16:29:22
   * Description        : Code for freertos applications
   ******************************************************************************
   *
@@ -104,7 +104,7 @@ void vApplicationTickHook( void )
    added here, but the tick hook is called from an interrupt context, so
    code must not attempt to block, and only the interrupt safe FreeRTOS API
    functions can be used (those that end in FromISR()). */
-	 LED_GreenToggle();
+//	 LED_GreenToggle();
 }
 /* USER CODE END 3 */
 
@@ -155,12 +155,15 @@ void MX_FREERTOS_Init(void) {
 	printf("osSemaphoreCreate sensorSemaphore Error\r\n");
 	return;
   }
+  osSemaphoreWait(sensorSemaphore, 0);
+
   osSemaphoreDef(sensorOKSemaphore);
   sensorOKSemaphore = osSemaphoreCreate(osSemaphore(sensorOKSemaphore), 1);
   if(sensorOKSemaphore == NULL){
 	printf("osSemaphoreCreate sensorOKSemaphore Error\r\n");
 	return;
   }
+  osSemaphoreWait(sensorOKSemaphore, 0);
 
   osSemaphoreDef(bleRecvOKSemaphore);
   bleRecvOKSemaphore = osSemaphoreCreate(osSemaphore(bleRecvOKSemaphore), 1);
@@ -168,6 +171,7 @@ void MX_FREERTOS_Init(void) {
 	printf("osSemaphoreCreate bleRecvOKSemaphore Error\r\n");
 	return;
   }
+  osSemaphoreWait(bleRecvOKSemaphore, 0);
 
   /* USER CODE END RTOS_SEMAPHORES */
 
@@ -441,8 +445,8 @@ void StartSensorTask(void const * argument)
 	if(osSemaphoreWait(sensorSemaphore, 100) == 0){
 	  LED_RedOn();
 	  AHRS_Update(Gyr, Acc, Mag, &AngE);
-	  //printf("+ AngE.Roll:%f\tAngE.Pitch:%f\tAngE.Yaw:%f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
-	  //EullerReport(&AngE);
+	  //printf("+ AngE.Roll:%7f AngE.Pitch:%7f AngE.Yaw:%7f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
+	  EullerReport(&AngE);
 	  //Control_Angle(&AngE,&expect);
 	  //Control_Gyro(Gyr);
 	  LED_RedOff();
@@ -480,14 +484,18 @@ void StartBleRecvTask(void const * argument)
   osDelay(1);
   BLE_BroadCast_Enable( 1 );
   //BLE_Input_Enable(1);
+  printf("BLE init OK\r\n");
+  BLE_StartRead();
   for(;;)
   {
-	BLE_StartRead();
 	if(osSemaphoreWait(bleRecvOKSemaphore, 1000) == 0)
 	{
+	  //BLE_GetPacket(NULL);
 	  printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
 			 gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);
 	}
+//	BLE_GetPacket(NULL);
+//	printf("BLE_GetPacket\r\n");
   }
   /* USER CODE END StartDefaultTask */
 }
