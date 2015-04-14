@@ -25,10 +25,6 @@ Command_Packet gCommand_Packet;
 
 void BLE_Init( void )
 {
-  BLE_Mode( 0 );
-  BLE_Power_Reset(  );
-  BLE_BroadCast_Enable( 1 );
-  BLE_Input_Enable(1);
 }
 
 /**
@@ -46,7 +42,6 @@ void BLE_Mode( uint8_t mode )
 	GPIO_SetBits(BLE_PWM1_OR_MODE_GPIO_PORT, BLE_PWM1_OR_MODE_PIN);
   }
 }
-
 
 /**
 * @brief  Reset Power.
@@ -97,15 +92,21 @@ void BLE_Input_Enable( uint8_t enable )
 }
 
 /**
-* @brief  Start Read Packet.
-* @param  None
+* @brief  Get BLE Packet.
+* @param  Command_Packet
 * @retval None
 */
 
-void BLE_StartRead(void)
+void BLE_GetPacket( Command_Packet *packet )
 {
-  HAL_UART_DMAStop(&huart3);
-  while(HAL_UART_Receive_DMA(&huart3, (uint8_t*)&gCommand_Packet, sizeof(gCommand_Packet)) != HAL_OK);
+  while(USART3Buf.RecBufChaOldest != USART3Buf.RecBufCurrent)
+  {
+	if(USART3Buf.RecBufValLen[USART3Buf.RecBufChaOldest] == 0x0f){
+	  memcpy(packet, USART3Buf.RecBuf[USART3Buf.RecBufChaOldest] + 1, 0x0e);
+	}
+
+	MOVE_OLDEST_BUFFER_TO_NEXT_CHANNEL(USART3Buf);
+  }
 }
 
 /**
@@ -113,9 +114,11 @@ void BLE_StartRead(void)
 * @param  None
 * @retval None
 */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+
+void BLE_StartRead(void)
 {
-  //printf("c %d s %d\r\n", huart->RxXferCount, huart->RxXferSize);
-  LED_BlueToggle();
-  BLERecvOK();
+  __HAL_UART_ENABLE(&huart3);
+  while(HAL_UART_Receive_DMA(&huart3,
+							 USART3Buf.RecBuf[USART3Buf.RecBufCurrent],
+							 USART_BufferLength) != HAL_OK);
 }

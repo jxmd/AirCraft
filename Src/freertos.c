@@ -104,7 +104,6 @@ void vApplicationTickHook( void )
    added here, but the tick hook is called from an interrupt context, so
    code must not attempt to block, and only the interrupt safe FreeRTOS API
    functions can be used (those that end in FromISR()). */
-//	 LED_GreenToggle();
 }
 /* USER CODE END 3 */
 
@@ -114,7 +113,6 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
    /* Run time stack overflow checking is performed if
    configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
    called if a stack overflow is detected. */
-  LED_RedToggle();
 }
 /* USER CODE END 4 */
 
@@ -131,7 +129,6 @@ void vApplicationMallocFailedHook(void)
    FreeRTOSConfig.h, and the xPortGetFreeHeapSize() API function can be used
    to query the size of free heap space that remains (although it does not
    provide information on how the remaining heap might be fragmented). */
-  LED_RedToggle();
 }
 /* USER CODE END 5 */
 
@@ -443,13 +440,11 @@ void StartSensorTask(void const * argument)
   for(;;)
   {
 	if(osSemaphoreWait(sensorSemaphore, 100) == 0){
-	  LED_RedOn();
 	  AHRS_Update(Gyr, Acc, Mag, &AngE);
 	  //printf("+ AngE.Roll:%7f AngE.Pitch:%7f AngE.Yaw:%7f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
-	  EullerReport(&AngE);
+	  //EullerReport(&AngE);
 	  //Control_Angle(&AngE,&expect);
 	  //Control_Gyro(Gyr);
-	  LED_RedOff();
 	}
 	else{
 	}
@@ -490,7 +485,7 @@ void StartBleRecvTask(void const * argument)
   {
 	if(osSemaphoreWait(bleRecvOKSemaphore, 1000) == 0)
 	{
-	  //BLE_GetPacket(NULL);
+	  BLE_GetPacket(&gCommand_Packet);
 	  printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
 			 gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);
 	}

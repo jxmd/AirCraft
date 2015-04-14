@@ -7,7 +7,9 @@
 #include "usart.h"
 #include "gpio.h"
 #include "my_free_rtos.h"
+#include "usart_pingpong.h"
 #include <stdio.h>
+#include <stdlib.h>
 /* Exported types ------------------------------------------------------------*/
 struct _Command_Packet{
   float mRoll;
@@ -87,4 +89,5 @@ void BLE_Input_Enable( uint8_t enable );
 void BLE_Power_Enable( uint8_t enable );
 void BLE_Mode( uint8_t mode );
 void BLE_StartRead(void);
+void BLE_GetPacket( Command_Packet *packet );
 #endif

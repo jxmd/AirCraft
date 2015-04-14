@@ -40,6 +40,9 @@
 /* USER CODE BEGIN 0 */
 #include "stdio.h"
 #include "leds.h"
+#include "usart.h"
+#include "usart_pingpong.h"
+#include "my_free_rtos.h"
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -52,7 +55,7 @@ extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
 
 /******************************************************************************/
-/*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
+/*            Cortex-M4 Processor Interruption and Exception Handlers         */
 /******************************************************************************/
 
 /**
@@ -107,11 +110,63 @@ void DMA1_Channel3_IRQHandler(void)
 void USART3_IRQHandler(void)
 {
   /* USER CODE BEGIN USART3_IRQn 0 */
-
   /* USER CODE END USART3_IRQn 0 */
-  HAL_UART_IRQHandler(&huart3);
+  //HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */
+  if((__HAL_UART_GET_IT(&huart3, UART_IT_IDLE) != RESET) && (__HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_IDLE) != RESET)){//IDLE
+	  LED_RedOn();
+	  __HAL_UART_CLEAR_IT(&huart3, UART_CLEAR_IDLEF);
+	  __HAL_UART_DISABLE_IT(&huart3, UART_IT_IDLE);
+	  __HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);
+	  /* 设置新数据的长度 */
+	  USART3Buf.RecBufValLen[USART3Buf.RecBufCurrent] = USART_BufferLength -
+		hdma_usart3_rx.Instance->CNDTR;
 
+	  /* 指向下一个通道号 */
+	  MOVE_CURRENT_BUFFER_TO_NEXT_CHANNEL(USART3Buf);
+
+	  /* 停止DMA传输 */
+	  HAL_UART_DMAStop(&huart3);
+
+	  __HAL_UART_ENABLE(&huart3);
+	  while(HAL_UART_Receive_DMA(&huart3,
+								 USART3Buf.RecBuf[USART3Buf.RecBufCurrent],
+								 USART_BufferLength) != HAL_OK);
+	  BLERecvOK();
+	  LED_RedOff();
+  }
+  //busy
+  else{
+	if(__HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_RXNE) != RESET){
+	  __HAL_UART_DISABLE_IT(&huart3, UART_IT_RXNE);
+	  __HAL_UART_CLEAR_IT(&huart3, UART_CLEAR_IDLEF);
+	  __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);
+	}
+  }
+
+  /* UART parity error interrupt occurred -------------------------------------*/
+  if((__HAL_UART_GET_IT(&huart3, UART_IT_PE) != RESET) && (__HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_PE) != RESET))
+  {
+    __HAL_UART_CLEAR_IT(&huart3, UART_CLEAR_PEF);
+  }
+
+  /* UART frame error interrupt occured --------------------------------------*/
+  if((__HAL_UART_GET_IT(&huart3, UART_IT_FE) != RESET) && (__HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_ERR) != RESET))
+  {
+    __HAL_UART_CLEAR_IT(&huart3, UART_CLEAR_FEF);
+  }
+
+  /* UART noise error interrupt occured --------------------------------------*/
+  if((__HAL_UART_GET_IT(&huart3, UART_IT_NE) != RESET) && (__HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_ERR) != RESET))
+  {
+    __HAL_UART_CLEAR_IT(&huart3, UART_CLEAR_NEF);
+  }
+
+  /* UART Over-Run interrupt occured -----------------------------------------*/
+  if((__HAL_UART_GET_IT(&huart3, UART_IT_ORE) != RESET) && (__HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_ERR) != RESET))
+  {
+    __HAL_UART_CLEAR_IT(&huart3, UART_CLEAR_OREF);
+  }
   /* USER CODE END USART3_IRQn 1 */
 }
 
