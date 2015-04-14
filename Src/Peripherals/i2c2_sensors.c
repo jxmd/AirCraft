@@ -108,6 +108,7 @@ HAL_StatusTypeDef Sensor_Init( void )
   }
 #endif
 
+#ifdef USE_BAROMETER
   /* Vertify LPS331AP */
   HAL_I2C_Mem_Read(&hi2c2, ADDR_LPS331AP, WHO_AM_I_G, 1, &ReadID, 1, SENSOR_FLAG_TIMEOUT);
   if(ReadID != LPS331AP_Device_ID){
@@ -117,6 +118,7 @@ HAL_StatusTypeDef Sensor_Init( void )
   else{
 	printf("LPS331AP Init OK!\r\n");
   }
+#endif
 
   /* Initialise the gyroscope */
   for(i=0; i<5; i++)

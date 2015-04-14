@@ -97,16 +97,29 @@ void BLE_Input_Enable( uint8_t enable )
 * @retval None
 */
 
-void BLE_GetPacket( Command_Packet *packet )
+bool BLE_GetPacket( Command_Packet *packet )
 {
+  bool ret = false;
   while(USART3Buf.RecBufChaOldest != USART3Buf.RecBufCurrent)
   {
-	if(USART3Buf.RecBufValLen[USART3Buf.RecBufChaOldest] == 0x0f){
-	  memcpy(packet, USART3Buf.RecBuf[USART3Buf.RecBufChaOldest] + 1, 0x0e);
+	if(USART3Buf.RecBufValLen[USART3Buf.RecBufChaOldest] == 0x10){
+	  uint8_t sum = 0, i = 0;
+	  for(i = 0; i < 15;i++)
+	  {
+		sum += USART3Buf.RecBuf[USART3Buf.RecBufChaOldest][i];
+	  }
+	  if(sum == USART3Buf.RecBuf[USART3Buf.RecBufChaOldest][15]){
+		memcpy(packet, USART3Buf.RecBuf[USART3Buf.RecBufChaOldest] + 1, 0x0e);
+		ret = true;
+	  }
+	  else{
+		printf("Ep %02x %02x\r\n", sum, USART3Buf.RecBuf[USART3Buf.RecBufChaOldest][15]);
+	  }
 	}
 
 	MOVE_OLDEST_BUFFER_TO_NEXT_CHANNEL(USART3Buf);
   }
+  return ret;
 }
 
 /**

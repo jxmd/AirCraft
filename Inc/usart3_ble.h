@@ -89,5 +89,5 @@ void BLE_Input_Enable( uint8_t enable );
 void BLE_Power_Enable( uint8_t enable );
 void BLE_Mode( uint8_t mode );
 void BLE_StartRead(void);
-void BLE_GetPacket( Command_Packet *packet );
+bool BLE_GetPacket( Command_Packet *packet );
 #endif

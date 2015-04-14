@@ -485,12 +485,10 @@ void StartBleRecvTask(void const * argument)
   {
 	if(osSemaphoreWait(bleRecvOKSemaphore, 1000) == 0)
 	{
-	  BLE_GetPacket(&gCommand_Packet);
-	  printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
-			 gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);
+	  if(BLE_GetPacket(&gCommand_Packet))
+		printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
+			   gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);
 	}
-//	BLE_GetPacket(NULL);
-//	printf("BLE_GetPacket\r\n");
   }
   /* USER CODE END StartDefaultTask */
 }

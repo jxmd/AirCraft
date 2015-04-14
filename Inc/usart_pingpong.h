@@ -2,7 +2,7 @@
 #define __USART_PING_PONG_H
 #define USEUSART3
 
-#define USART_BufferChannel 8
+#define USART_BufferChannel 4
 #define USART_BufferLength 48
 
 
