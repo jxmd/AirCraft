@@ -46,6 +46,9 @@
 #include "tim2_motor.h"
 #include "usart3_ble.h"
 #include "leds.h"
+#include "algorithm_pid2.h"
+#include "pid.h"
+#include "usart1_dbg.h"
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -193,7 +196,7 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(sensorTask, StartSensorTask, osPriorityNormal, 0, 512);
   sensorTaskHandle = osThreadCreate(osThread(sensorTask), NULL);
 
-  osThreadDef(bleRecvTask, StartBleRecvTask, osPriorityNormal, 0, 128);
+  osThreadDef(bleRecvTask, StartBleRecvTask, osPriorityNormal, 0, 256);
   bleRecvTaskHandle = osThreadCreate(osThread(bleRecvTask), NULL);
 
 //  osThreadDef(uartTask, StartUartTask, osPriorityNormal, 0, 128);
@@ -222,7 +225,6 @@ void getSensorDataTimerCallback(void const * argument)
 {
   /* USER CODE BEGIN getSensorDataTimerCallback */
 
-
 #define MoveAveSize 8
   static float Acc_FIFO[3][MoveAveSize] = {0};
   static float Gyr_FIFO[3][MoveAveSize] = {0};
@@ -232,7 +234,7 @@ void getSensorDataTimerCallback(void const * argument)
   static uint16_t Correction_Time = 0;
   static uint8_t cycle = 0;
 //  printf("%s\r\n", __func__);
-
+LED_BlueOn();
   StartReadSensors(Gyr,
 						Acc,
 #ifdef USE_MAGNETOMETER
@@ -249,6 +251,8 @@ void getSensorDataTimerCallback(void const * argument)
 						  );
   if(osSemaphoreWait(sensorOKSemaphore, 100) != 0)
 	return;
+  LED_BlueOff();
+  LED_GreenOn();
 //  printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
 //  printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
 //  printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
@@ -298,7 +302,7 @@ void getSensorDataTimerCallback(void const * argument)
 
 	//	  YELLOW_ON;
 	/* Offset Correction */
-#define GyroSampleSize 64
+#define GyroSampleSize 1024
 	OffsetSum[0] += Gyr[0];
 	OffsetSum[1] += Gyr[1];
 	OffsetSum[2] += Gyr[2];
@@ -422,6 +426,7 @@ void getSensorDataTimerCallback(void const * argument)
 
 	break;
   }
+  LED_GreenOff();
   /* USER CODE END getSensorDataTimerCallback */
 }
 
@@ -434,20 +439,68 @@ void StartSensorTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   printf("%s\r\n", __func__);
+  Motor_Out(300,0,0,0);
+  osDelay(50);
+  Motor_Out(0,0,0,0);
+  osDelay(500);
 
+  Motor_Out(0,300,0,0);
+  osDelay(50);
+  Motor_Out(0,0,0,0);
+  osDelay(500);
+
+  Motor_Out(0,0,300,0);
+  osDelay(50);
+  Motor_Out(0,0,0,0);
+  osDelay(500);
+
+  Motor_Out(0,0,0,300);
+  osDelay(50);
+  Motor_Out(0,0,0,0);
   osTimerStart(getSensorDataTimerHandle, 1000 / 500);
+  PID2_Init();
   /* Infinite loop */
   for(;;)
   {
+
 	if(osSemaphoreWait(sensorSemaphore, 100) == 0){
+	  LED_RedOn();
 	  AHRS_Update(Gyr, Acc, Mag, &AngE);
-	  //printf("+ AngE.Roll:%7f AngE.Pitch:%7f AngE.Yaw:%7f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
+#if 0
+	  if(BLE_CONNECTED){
+//		PID2_Process(toDeg(AngE.Pitch - AngE_Zero.Pitch) - gCommand_Packet.mRoll,
+//					 toDeg(AngE.Roll - AngE_Zero.Roll) - gCommand_Packet.mPitch,
+//					 toDeg(AngE.Yaw - AngE_Zero.Yaw) - gCommand_Packet.mYaw,
+//					 gCommand_Packet.mThrust);
+		if(gCommand_Packet.mThrust > 800)
+			PID2_Process(toDeg(AngE.Pitch - AngE_Zero.Pitch) - gCommand_Packet.mRoll,
+					 0,
+					 0,
+					 gCommand_Packet.mThrust);
+		else{
+		  Motor_Out(0,0,0,0);
+		}
+//		expect.Roll_expect = gCommand_Packet.mPitch;
+//		expect.Pitch_expect = gCommand_Packet.mRoll;
+//		expect.Yaw_expect = gCommand_Packet.mYaw;
+//		expect.Throttle_expect = gCommand_Packet.mThrust;
+//		Control_Angle(&AngE,&expect);
+//		Control_Gyro(Gyr);
+	  }
+	  else{
+		Motor_Out(0,0,0,0);
+		PID2_Init();
+		SensorMode = Mode_GyrCorrect;
+		AngE.Pitch = AngE.Roll = AngE.Yaw = 0;
+	  }
+//	  printf("+ AngE.Roll:%7f AngE.Pitch:%7f AngE.Yaw:%7f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
 	  //EullerReport(&AngE);
-	  //Control_Angle(&AngE,&expect);
-	  //Control_Gyro(Gyr);
+#endif
+	  LED_RedOff();
 	}
 	else{
 	}
+
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -463,15 +516,6 @@ void StartBleRecvTask(void const * argument)
   /* USER CODE BEGIN StartDefaultTask */
   printf("%s\r\n", __func__);
   /* Infinite loop */
-//  Motor_Out(500,0,0,0);
-//  osDelay(2000);
-//  Motor_Out(0,500,0,0);
-//  osDelay(2000);
-//  Motor_Out(0,0,500,0);
-//  osDelay(2000);
-//  Motor_Out(0,0,0,500);
-//  osDelay(2000);
-//  Motor_Out(0,0,0,0);
   BLE_Mode( 0 );
   BLE_Power_Enable( 0 );
   osDelay(1);
@@ -485,9 +529,13 @@ void StartBleRecvTask(void const * argument)
   {
 	if(osSemaphoreWait(bleRecvOKSemaphore, 1000) == 0)
 	{
-	  if(BLE_GetPacket(&gCommand_Packet))
-		printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
-			   gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);
+	  if(BLE_GetPacket(&gCommand_Packet)){
+//		Motor_Out(gCommand_Packet.mThrust,gCommand_Packet.mThrust,
+//				  gCommand_Packet.mThrust,gCommand_Packet.mThrust);
+
+//		printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
+//			   gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);
+	  }
 	}
   }
   /* USER CODE END StartDefaultTask */
@@ -516,9 +564,12 @@ void StartUartTask(void const * argument)
 */
 void EullerReport(EulerAngle* pAngE)
 {
+//  int16_t  yaw 	 = (int16_t)(toDeg(pAngE->Yaw - AngE_Zero.Yaw)*10);
+//  int16_t  pitch = (int16_t)(toDeg(pAngE->Roll - AngE_Zero.Roll)*10);
+//  int16_t  roll	 = (int16_t)(toDeg(pAngE->Pitch - AngE_Zero.Pitch)*10);
   int16_t  yaw 	 = (int16_t)(toDeg(pAngE->Yaw)*10);
-  int16_t  pitch = (int16_t)(toDeg(pAngE->Pitch)*10);
-  int16_t  roll	 = (int16_t)(toDeg(pAngE->Roll)*10);
+  int16_t  pitch = (int16_t)(toDeg(pAngE->Roll)*10);
+  int16_t  roll	 = (int16_t)(toDeg(pAngE->Pitch)*10);
   uint8_t  ctemp = 0;
   uint16_t verification = 0xB1;
 

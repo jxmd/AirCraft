@@ -13,6 +13,7 @@
 #define GPIO_SetBits(x, y) HAL_GPIO_WritePin(x, y, GPIO_PIN_SET)
 /* Private variables ---------------------------------------------------------*/
 Command_Packet gCommand_Packet;
+volatile uint8_t BLE_CONNECTED = 0;
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -102,6 +103,16 @@ bool BLE_GetPacket( Command_Packet *packet )
   bool ret = false;
   while(USART3Buf.RecBufChaOldest != USART3Buf.RecBufCurrent)
   {
+	if(USART3Buf.RecBuf[USART3Buf.RecBufChaOldest][4] == 'O' &&
+	   USART3Buf.RecBuf[USART3Buf.RecBufChaOldest][5] == 'K'){
+		 BLE_CONNECTED = 1;
+		 printf("BLE OK\r\n");
+	   }
+	else if(USART3Buf.RecBuf[USART3Buf.RecBufChaOldest][4] == 'D' &&
+	   USART3Buf.RecBuf[USART3Buf.RecBufChaOldest][5] == 'I'){
+	  BLE_CONNECTED = 0;
+	  printf("BLE DISCONNECT\r\n");
+	}
 	if(USART3Buf.RecBufValLen[USART3Buf.RecBufChaOldest] == 0x10){
 	  uint8_t sum = 0, i = 0;
 	  for(i = 0; i < 15;i++)

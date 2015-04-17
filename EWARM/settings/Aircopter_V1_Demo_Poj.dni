@@ -9,7 +9,7 @@ TriggerName=main
 LimitSize=0
 ByteLimit=50
 [DebugChecksum]
-Checksum=-460785489
+Checksum=-1330518851
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -51,6 +51,7 @@ FilePath=_ ""
 UseFilter=_ 0
 [array_types]
 Fmt0=uint8_t[32]	1	0
+Fmt1=uint8_t[48]	4	0
 [Trace2]
 Enabled=0
 ShowSource=0

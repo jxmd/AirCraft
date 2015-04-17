@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<userOverrides>
+  <override>
+    <path>D:\project\Aircopter_V1_Demo\Aircopter_V1_Demo_Poj\Src\Algorithm\algorithm_matrix.c</path>
+    <encoding>UTF-8</encoding>
+  </override>
+  <override>
+    <path>D:\project\Aircopter_V1_Demo\Aircopter_V1_Demo_Poj\Src\Algorithm\pid2.c</path>
+    <encoding>UTF-8</encoding>
+  </override>
+</userOverrides>
+
+

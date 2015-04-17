@@ -136,6 +136,7 @@ typedef struct {
 extern Sensor_Mode 						SensorMode;
 extern Quaternion 						NumQ;
 extern EulerAngle 						AngE;
+extern EulerAngle 						AngE_Zero;
 extern UploadAngle   					iAngE;
 extern float 									Gyr[3];
 extern float 									Acc[3];

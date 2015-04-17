@@ -113,6 +113,12 @@
         <file>
           <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_pid.c</name>
         </file>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_pid2.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Algorithm\pid2.c</name>
+        </file>
       </group>
       <group>
         <name>Peripherals</name>

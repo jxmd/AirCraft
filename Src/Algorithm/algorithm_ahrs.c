@@ -33,6 +33,7 @@ float 							Gyr[3] = {0};
 float 							Acc[3] = {0};
 float 							Mag[3] = {0};
 EulerAngle 					AngE = {0};
+EulerAngle 					AngE_Zero = {0};
 
 
 #ifdef USE_MAGNETOMETER
@@ -132,9 +133,10 @@ void AHRS_Init(float* pAcc, float* pMag, EulerAngle* pAngE)
 
 #else
   /* Determin initial Euller angles according to Acc */
-  pAngE->Yaw 	 = 	0;
-  pAngE->Pitch = -asinf(pAcc[0]);
-  pAngE->Roll  = atan2f(pAcc[1], pAcc[2]);
+  AngE_Zero.Yaw = pAngE->Yaw 	 = 	0;
+  AngE_Zero.Pitch = pAngE->Pitch = -asinf(pAcc[0]);
+  AngE_Zero.Roll = pAngE->Roll  = atan2f(pAcc[1], pAcc[2]);
+
   /* Initialize quaternion */
   QuaternionToNumQ(&NumQ, &AngE);
 #endif
@@ -609,10 +611,13 @@ void AHRS_Update(float* pGyr, float* pAcc, float* pMag, EulerAngle* pAngE)
   //cbn[6] = 2*(NumQ.q1*NumQ.q3 - NumQ.q0*NumQ.q2);
   //cbn[7] = 2*(NumQ.q2*NumQ.q3 + NumQ.q0*NumQ.q1);
   //cbn[8] = squa(NumQ.q0) - squa(NumQ.q1) - squa(NumQ.q2) + squa(NumQ.q3);
-
   pAngE->Yaw = atan2f(cbn[3], cbn[0]);
 
   QuaternionToNumQ(&NumQ, &AngE);
+
+//  pAngE->Yaw -= AngE_Zero.Yaw;
+//  pAngE->Pitch -= AngE_Zero.Pitch;
+//  pAngE->Roll -= AngE_Zero.Roll;
 
 #endif
 }

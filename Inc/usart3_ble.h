@@ -8,6 +8,7 @@
 #include "gpio.h"
 #include "my_free_rtos.h"
 #include "usart_pingpong.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 /* Exported types ------------------------------------------------------------*/
@@ -82,6 +83,7 @@ typedef struct _Command_Packet Command_Packet;
 
 /* Exported constants --------------------------------------------------------*/
 extern Command_Packet gCommand_Packet;
+extern volatile uint8_t BLE_CONNECTED;
 /* Exported functions ------------------------------------------------------- */
 void BLE_Init( void );
 void BLE_BroadCast_Enable( uint8_t enable );
