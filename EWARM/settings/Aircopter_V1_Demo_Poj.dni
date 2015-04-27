@@ -46,15 +46,12 @@ EnableCache=1
 [RegisterFilter]
 FilePath=_ ""
 UseFilter=_ 0
-[array_types]
-Fmt0=uint8_t[32]	1	0
-Fmt1=uint8_t[48]	4	0
 [SfrWindow]
 Show=1 1
 Sort=4 0
-[Trace2]
-Enabled=0
-ShowSource=0
+[array_types]
+Fmt0=uint8_t[32]	1	0
+Fmt1=uint8_t[48]	4	0
 [SWOTraceWindow]
 PcSampling=0
 InterruptLogs=0
@@ -77,17 +74,13 @@ GraphEnabled=0
 ShowTimeLog=1
 ShowTimeSum=1
 SumSortOrder=0
-[Disassemble mode]
-mode=0
-[Breakpoints2]
-Count=0
 [Log file]
 LoggingEnabled=_ 1
 LogFile=_ "$PROJ_DIR$\LogFile1.log"
 Category=_ 0
-[Aliases]
-Count=0
-SuppressDialog=0
+[TermIOLog]
+LoggingEnabled=_ 0
+LogFile=_ ""
 [CallStackLog]
 Enabled=0
 [DriverProfiling]
@@ -96,6 +89,10 @@ Mode=3
 Graph=0
 Symbiont=0
 Exclusions=
-[TermIOLog]
-LoggingEnabled=_ 0
-LogFile=_ ""
+[Disassemble mode]
+mode=0
+[Breakpoints2]
+Count=0
+[Aliases]
+Count=0
+SuppressDialog=0
