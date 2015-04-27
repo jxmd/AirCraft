@@ -56,7 +56,7 @@ const float QA[16] = {QA_INITIAL,0		   ,0		  	,0,
 0		    ,0		   ,QA_INITIAL,0,
 0		    ,0		   ,0		  ,QA_INITIAL};
 
-const float RA[9] = {RA_INITIAL,0,			0,
+float RA[9] = {RA_INITIAL,0,			0,
 0,			RA_INITIAL,	0,
 0,			0,			RA_INITIAL};
 
@@ -661,6 +661,16 @@ void AHRS_Update(float* pGyr, float* pAcc, float* pMag, EulerAngle* pAngE)
   float Mq12, Mq22, Mq32;
   float f_4, f_5, f_6;
 #endif
+//  if(gCommand_Packet.mThrust != 0){
+//	RA[0] = 0.01;
+//	RA[4] = 0.01;
+//	RA[8] = 0.01;
+//  }
+//  else{
+//	RA[0] = 0.8;
+//	RA[4] = 0.8;
+//	RA[8] = 0.8;
+//  }
 
   /* Processing the measurements of gyroscope */
   if(pGyr[2] < Threshold && pGyr[2] > -Threshold)

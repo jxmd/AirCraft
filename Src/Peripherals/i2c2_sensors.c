@@ -69,7 +69,7 @@ HAL_StatusTypeDef Sensor_Init( void )
   {
 	{0x00, CTRL_REG2_A},	// High pass filter disable
 	{0x00, CTRL_REG3_A},	// Disable Interrupt
-	{0x00, CTRL_REG4_A},	// FS: +-2g, High_Resolution: Enable, Endianness: Little Endian
+	{0x10, CTRL_REG4_A},	// FS: +-2g, High_Resolution: Enable, Endianness: Little Endian
 	{0x00, CTRL_REG5_A},	// FIFO Mode: Disable
 	{0x00, CTRL_REG6_A},
 	{0x77, CTRL_REG1_A},	// ODR: 400Hz, PowerMode: Normal, Axes: X/Y/Z Enable
@@ -167,7 +167,7 @@ static inline void dump_xBuffer()
 void StartReadSensors(float* pfGData, float* pfAData, float* pfMData, float* pfBData)
 {
   if(emDMA_READ != DMA_READ_O) return;
-
+LED_GreenOn();
   pGloableGData = pfGData;
   pGloableAData = pfAData;
   pGloableMData = pfMData;
@@ -186,6 +186,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
   int16_t RawData[3] = {0};
   float sensitivity = 0.0;
 //  dump_xBuffer();
+  LED_GreenOff();
 
 
   switch(emDMA_READ)
@@ -206,6 +207,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 	  emDMA_READ = DMA_READ_A;
 	  memset(xBuffer, 0, 6);
 	  I2C_ReadReg(ADDR_LSM330DLC_A, OUT_X_L_A, (uint8_t *)xBuffer, 6);
+	  LED_GreenOn();
 
 	  /* divide by sensitivity */
 	  for(i=0; i<3; i++)
@@ -213,12 +215,13 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 		pGloableGData[i]=(float)RawData[i] * sensitivity;
 	  }
 	}
+
 	break;
   case DMA_READ_A:
 	{
 	  //Read LSM330DLC output register, and calculate the acceleration
 	  //ACC=(1/SENSITIVITY)* (out_h*256+out_l)/16 (12 bit rappresentation)
-	  sensitivity = LSM330DLC_Acc_Sensitivity_2g;
+	  sensitivity = LSM330DLC_Acc_Sensitivity_4g;
 	  for(i=0; i<3; i++)
 	  {
 		RawData[i]=((int16_t)((uint16_t)xBuffer[2*i+1] << 8) + xBuffer[2*i])/cDivider;
@@ -228,6 +231,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 	  emDMA_READ = DMA_READ_M;
 	  memset(xBuffer, 0, 6);
 	  I2C_ReadReg(ADDR_LIS3MDL, OUT_X_L_M, (uint8_t *)xBuffer, 6);
+	  LED_GreenOn();
 #else
 	  emDMA_READ = DMA_READ_O;
 	  SensorsReadOK();
@@ -239,6 +243,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 		pGloableAData[i]=(float)RawData[i] * sensitivity;
 	  }
 	}
+
 	break;
   case DMA_READ_M:
 	{
@@ -252,6 +257,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 	  emDMA_READ = DMA_READ_B;
 	  memset(xBuffer, 0, 6);
 	  I2C_ReadReg(ADDR_LPS331AP, PRESS_OUT_L_B, (uint8_t *)xBuffer, 6);
+	  LED_GreenOn();
 #else
 	  emDMA_READ = DMA_READ_O;
 	  SensorsReadOK();
@@ -263,6 +269,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 		pGloableMData[i]=(float)RawData[i] / sensitivity;
 	  }
 	}
+	LED_GreenOn();
 
 	break;
   case DMA_READ_B:
@@ -270,6 +277,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 	}
 	break;
   }
+
 }
 
 void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)

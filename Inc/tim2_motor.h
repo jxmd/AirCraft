@@ -8,8 +8,9 @@
 #include <stdio.h>
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
+//#define MOTOR_SPEED_MIN 1100
 #define MOTOR_SPEED_MIN 0
-#define MOTOR_SPEED_MAX 1800
+#define MOTOR_SPEED_MAX 1900
 /* Exported functions ------------------------------------------------------- */
 void Motor_Out( int16_t, int16_t, int16_t, int16_t );
 #endif

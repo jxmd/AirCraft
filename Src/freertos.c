@@ -49,6 +49,7 @@
 #include "algorithm_pid2.h"
 #include "pid.h"
 #include "usart1_dbg.h"
+#include "DataScope_DP.h"
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -59,6 +60,7 @@ osTimerId getSensorDataTimerHandle;
 osThreadId sensorTaskHandle;
 osSemaphoreId sensorSemaphore;
 osSemaphoreId sensorOKSemaphore;
+osSemaphoreId sensorWorkSemaphore;
 osThreadId bleRecvTaskHandle;
 osSemaphoreId bleRecvOKSemaphore;
 osThreadId uartTaskHandle;
@@ -157,6 +159,14 @@ void MX_FREERTOS_Init(void) {
   }
   osSemaphoreWait(sensorSemaphore, 0);
 
+  osSemaphoreDef(sensorWorkSemaphore);
+  sensorWorkSemaphore = osSemaphoreCreate(osSemaphore(sensorWorkSemaphore), 1);
+  if(sensorWorkSemaphore == NULL){
+	printf("osSemaphoreCreate sensorWorkSemaphore Error\r\n");
+	return;
+  }
+  osSemaphoreWait(sensorWorkSemaphore, 0);
+
   osSemaphoreDef(sensorOKSemaphore);
   sensorOKSemaphore = osSemaphoreCreate(osSemaphore(sensorOKSemaphore), 1);
   if(sensorOKSemaphore == NULL){
@@ -252,7 +262,7 @@ LED_BlueOn();
   if(osSemaphoreWait(sensorOKSemaphore, 100) != 0)
 	return;
   LED_BlueOff();
-  LED_GreenOn();
+
 //  printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
 //  printf("Acc[X]:%7.2f\tAcc[Y]:%7.2f\tAcc[Z]:%7.2f\r\n", Acc[0], Acc[1], Acc[2]);
 //  printf("Mag[X]:%7.2f\tMag[Y]:%7.2f\tMag[Z]:%7.2f\r\n", Mag[0], Mag[1], Mag[2]);
@@ -321,7 +331,7 @@ LED_BlueOn();
 
 	/************************** Mode_CorrectAcc **************************************/
   case Mode_AccCorrect:
-
+#if 0
 	/* Offset Correction */
 	Acc_Parameter.Acc_Offset.Offset_X = -0.007970729553635;
 	Acc_Parameter.Acc_Offset.Offset_Y = 0.019836643844817;
@@ -336,6 +346,22 @@ LED_BlueOn();
 	Acc_Parameter.Acc_Coupling.K_ZY = -0.005387874488198;
 	Acc_Parameter.Acc_Coupling.K_XZ = 0;
 	Acc_Parameter.Acc_Coupling.K_YZ = 0;
+#else
+	/* Offset Correction */
+	Acc_Parameter.Acc_Offset.Offset_X = 0;
+	Acc_Parameter.Acc_Offset.Offset_Y = 0;
+	Acc_Parameter.Acc_Offset.Offset_Z = 0;
+	/* Coupling Correction */
+	Acc_Parameter.Acc_Coupling.K_X  = 1;
+	Acc_Parameter.Acc_Coupling.K_Y  = 1;
+	Acc_Parameter.Acc_Coupling.K_Z  = 1;
+	Acc_Parameter.Acc_Coupling.K_YX = 0;
+	Acc_Parameter.Acc_Coupling.K_ZX = 0;
+	Acc_Parameter.Acc_Coupling.K_XY = 0;
+	Acc_Parameter.Acc_Coupling.K_ZY = 0;
+	Acc_Parameter.Acc_Coupling.K_XZ = 0;
+	Acc_Parameter.Acc_Coupling.K_YZ = 0;
+#endif
 	/* Wait until FIFO is filled up */
 	MoveAve_SMA(Acc[0], Acc_FIFO[0], MoveAveSize);
 	MoveAve_SMA(Acc[1], Acc_FIFO[1], MoveAveSize);
@@ -404,7 +430,7 @@ LED_BlueOn();
 
 	/************************** Algorithm Mode ****************************************/
   case Mode_Algorithm:
-
+#if 1
 	/* Weighted Moving Average */
 	Gyr[0] = MoveAve_WMA(Gyr[0], Gyr_FIFO[0], MoveAveSize);
 	Gyr[1] = MoveAve_WMA(Gyr[1], Gyr_FIFO[1], MoveAveSize);
@@ -418,15 +444,31 @@ LED_BlueOn();
 	Mag[1] = MoveAve_WMA(Mag[1], Mag_FIFO[1], MoveAveSize);
 	Mag[2] = MoveAve_WMA(Mag[2], Mag_FIFO[2], MoveAveSize);
 #endif
+#else
+		/* Slide Moving Average */
+	Gyr[0] = MoveAve_SMA(Gyr[0], Gyr_FIFO[0], MoveAveSize);
+	Gyr[1] = MoveAve_SMA(Gyr[1], Gyr_FIFO[1], MoveAveSize);
+	Gyr[2] = MoveAve_SMA(Gyr[2], Gyr_FIFO[2], MoveAveSize);
+	Acc[0] = MoveAve_SMA(Acc[0], Acc_FIFO[0], MoveAveSize);
+	Acc[1] = MoveAve_SMA(Acc[1], Acc_FIFO[1], MoveAveSize);
+	Acc[2] = MoveAve_SMA(Acc[2], Acc_FIFO[2], MoveAveSize);
+
+#ifdef	USE_MAGNETOMETER
+	Mag[0] = MoveAve_SMA(Mag[0], Mag_FIFO[0], MoveAveSize);
+	Mag[1] = MoveAve_SMA(Mag[1], Mag_FIFO[1], MoveAveSize);
+	Mag[2] = MoveAve_SMA(Mag[2], Mag_FIFO[2], MoveAveSize);
+#endif
+#endif
 	cycle ++;
 	if(cycle >= 10){
 	  cycle = 0;
 	  osSemaphoreRelease(sensorSemaphore);
+	  osSemaphoreWait(sensorWorkSemaphore, 5);
 	}
 
 	break;
   }
-  LED_GreenOff();
+
   /* USER CODE END getSensorDataTimerCallback */
 }
 
@@ -439,63 +481,106 @@ void StartSensorTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   printf("%s\r\n", __func__);
-  Motor_Out(300,0,0,0);
+
+//  Motor_Out(MOTOR_SPEED_MAX,MOTOR_SPEED_MAX,MOTOR_SPEED_MAX,MOTOR_SPEED_MAX);
+//  osDelay(2500);
+//  Motor_Out(MOTOR_SPEED_MIN,MOTOR_SPEED_MIN,MOTOR_SPEED_MIN,MOTOR_SPEED_MIN);
+//  osDelay(2500);
+
+  Motor_Out(MOTOR_SPEED_MIN + 300,0,0,0);
   osDelay(50);
   Motor_Out(0,0,0,0);
   osDelay(500);
 
-  Motor_Out(0,300,0,0);
+  Motor_Out(0,MOTOR_SPEED_MIN + 300,0,0);
   osDelay(50);
   Motor_Out(0,0,0,0);
   osDelay(500);
 
-  Motor_Out(0,0,300,0);
+  Motor_Out(0,0,MOTOR_SPEED_MIN + 300,0);
   osDelay(50);
   Motor_Out(0,0,0,0);
   osDelay(500);
 
-  Motor_Out(0,0,0,300);
+  Motor_Out(0,0,0,MOTOR_SPEED_MIN + 300);
   osDelay(50);
   Motor_Out(0,0,0,0);
   osTimerStart(getSensorDataTimerHandle, 1000 / 500);
-  PID2_Init();
+
+
+//  Motor_Out(1000,1000,1000,1000);
+
   /* Infinite loop */
   for(;;)
   {
 
 	if(osSemaphoreWait(sensorSemaphore, 100) == 0){
+	  uint8_t Send_Count = 0, i =0;
 	  LED_RedOn();
 	  AHRS_Update(Gyr, Acc, Mag, &AngE);
-#if 0
+#if 1
+#if 1
+	  DataScope_Get_Channel_Data( Acc[0], 1 );
+	  DataScope_Get_Channel_Data( Acc[1], 2 );
+	  DataScope_Get_Channel_Data( Acc[2], 3 );
+	  DataScope_Get_Channel_Data( Gyr[0] , 4 );
+	  DataScope_Get_Channel_Data( Gyr[1] , 5 );
+	  DataScope_Get_Channel_Data( Gyr[2] , 6 );
+	  DataScope_Get_Channel_Data( toDeg(AngE.Pitch) , 7 );
+	  DataScope_Get_Channel_Data( toDeg(AngE.Roll) , 8 );
+	  DataScope_Get_Channel_Data( toDeg(AngE.Yaw) , 9 );
+
+	  Send_Count = DataScope_Data_Generate(9);
+	  for(i = 0;i < Send_Count;i++)
+	  {
+		USART_DBG_Send(DataScope_OutPut_Buffer[i]);
+	  }
+#else
+	  DataScope_Get_Channel_Data( toDeg(AngE.Pitch) , 1 );
+	  DataScope_Get_Channel_Data( toDeg(AngE.Roll) , 2 );
+	  DataScope_Get_Channel_Data( toDeg(AngE.Yaw) , 3 );
+
+	  Send_Count = DataScope_Data_Generate(3);
+	  for(i = 0;i < Send_Count;i++)
+	  {
+		USART_DBG_Send(DataScope_OutPut_Buffer[i]);
+	  }
+#endif
+#endif
+
+	  osSemaphoreRelease(sensorWorkSemaphore);
+
+#if 1
 	  if(BLE_CONNECTED){
-//		PID2_Process(toDeg(AngE.Pitch - AngE_Zero.Pitch) - gCommand_Packet.mRoll,
-//					 toDeg(AngE.Roll - AngE_Zero.Roll) - gCommand_Packet.mPitch,
-//					 toDeg(AngE.Yaw - AngE_Zero.Yaw) - gCommand_Packet.mYaw,
-//					 gCommand_Packet.mThrust);
-		if(gCommand_Packet.mThrust > 800)
-			PID2_Process(toDeg(AngE.Pitch - AngE_Zero.Pitch) - gCommand_Packet.mRoll,
+#if 0
+		//		  PID2_Process(toDeg(AngE.Pitch - AngE_Zero.Pitch) - gCommand_Packet.mRoll,
+		//					   toDeg(AngE.Roll - AngE_Zero.Roll) - gCommand_Packet.mPitch,
+		//					   toDeg(AngE.Yaw - AngE_Zero.Yaw) - gCommand_Packet.mYaw,
+		//					   gCommand_Packet.mThrust);
+		PID2_Process(0,
 					 0,
 					 0,
 					 gCommand_Packet.mThrust);
-		else{
-		  Motor_Out(0,0,0,0);
-		}
-//		expect.Roll_expect = gCommand_Packet.mPitch;
-//		expect.Pitch_expect = gCommand_Packet.mRoll;
-//		expect.Yaw_expect = gCommand_Packet.mYaw;
-//		expect.Throttle_expect = gCommand_Packet.mThrust;
+#else
+		//			expect.Roll_expect = gCommand_Packet.mPitch;
+		//			expect.Pitch_expect = gCommand_Packet.mRoll;
+		//			expect.Yaw_expect = gCommand_Packet.mYaw;
+
+//		expect.Roll_expect = 0;
+//		expect.Pitch_expect = 0;
+//		expect.Yaw_expect = AngE.Yaw;
+//		expect.Throttle_expect = gCommand_Packet.mThrust;//1500;
 //		Control_Angle(&AngE,&expect);
-//		Control_Gyro(Gyr);
+//		Control_Gyro(Gyr,&AngE);
+#endif
 	  }
 	  else{
 		Motor_Out(0,0,0,0);
-		PID2_Init();
-		SensorMode = Mode_GyrCorrect;
-		AngE.Pitch = AngE.Roll = AngE.Yaw = 0;
 	  }
 //	  printf("+ AngE.Roll:%7f AngE.Pitch:%7f AngE.Yaw:%7f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
-	  //EullerReport(&AngE);
+
 #endif
+	  //EullerReport(&AngE);
 	  LED_RedOff();
 	}
 	else{
@@ -530,8 +615,10 @@ void StartBleRecvTask(void const * argument)
 	if(osSemaphoreWait(bleRecvOKSemaphore, 1000) == 0)
 	{
 	  if(BLE_GetPacket(&gCommand_Packet)){
-//		Motor_Out(gCommand_Packet.mThrust,gCommand_Packet.mThrust,
-//				  gCommand_Packet.mThrust,gCommand_Packet.mThrust);
+		Motor_Out(gCommand_Packet.mThrust,gCommand_Packet.mThrust,
+				  gCommand_Packet.mThrust,gCommand_Packet.mThrust);
+//		Motor_Out(gCommand_Packet.mThrust,0,
+//				  0,0);
 
 //		printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
 //			   gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);

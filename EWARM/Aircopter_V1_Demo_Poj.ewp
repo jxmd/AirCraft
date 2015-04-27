@@ -143,7 +143,7 @@
         <option>
           <name>GBECoreSlave</name>
           <version>20</version>
-          <state>39</state>
+          <state>40</state>
         </option>
         <option>
           <name>OGUseCmsis</name>
@@ -977,9 +977,6 @@
           <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_moveAve.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_pid.c</name>
-        </file>
-        <file>
           <name>$PROJ_DIR$\..\Src\Algorithm\algorithm_pid2.c</name>
         </file>
         <file>
@@ -988,6 +985,9 @@
       </group>
       <group>
         <name>Peripherals</name>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Peripherals\DataScope_DP.C</name>
+        </file>
         <file>
           <name>$PROJ_DIR$\..\Src\Peripherals\i2c2_sensors.c</name>
         </file>

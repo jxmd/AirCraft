@@ -37,7 +37,7 @@ void Motor_Out( int16_t motor_1, int16_t motor_2, int16_t motor_3, int16_t motor
   if(motor2_Pulse < MOTOR_SPEED_MIN) motor2_Pulse = MOTOR_SPEED_MIN;
   if(motor3_Pulse < MOTOR_SPEED_MIN) motor3_Pulse = MOTOR_SPEED_MIN;
   if(motor4_Pulse < MOTOR_SPEED_MIN) motor4_Pulse = MOTOR_SPEED_MIN;
-#if 0
+#if 1
   MX_TIM2_PWM_SetChannelPulse(TIM_CHANNEL_1, motor1_Pulse);
   MX_TIM2_PWM_SetChannelPulse(TIM_CHANNEL_2, motor2_Pulse);
   MX_TIM2_PWM_SetChannelPulse(TIM_CHANNEL_3, motor3_Pulse);

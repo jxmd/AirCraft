@@ -39,7 +39,7 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
-#define MOTOR_PWM_HZ 500
+#define MOTOR_PWM_HZ 12000
 #define MOTOR_PWM_PERIOD 2000
 /* USER CODE END 0 */
 
@@ -53,7 +53,8 @@ void MX_TIM2_Init(void)
   TIM_OC_InitTypeDef sConfigOC;
 
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = (uint32_t) (SystemCoreClock / (MOTOR_PWM_HZ * MOTOR_PWM_PERIOD)) - 1;;
+//  htim2.Init.Prescaler = (uint32_t) (SystemCoreClock / (MOTOR_PWM_HZ * MOTOR_PWM_PERIOD)) - 1;;
+  htim2.Init.Prescaler = (uint32_t) (SystemCoreClock / 30000000UL);
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 2000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -82,11 +83,6 @@ void MX_TIM2_Init(void)
   HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3);
 
   HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_4);
-
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
 
 }
 
