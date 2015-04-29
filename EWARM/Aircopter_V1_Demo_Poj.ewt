@@ -123,10 +123,19 @@
           <name>$PROJ_DIR$\..\Src\Peripherals\DataScope_DP.C</name>
         </file>
         <file>
+          <name>$PROJ_DIR$\..\Src\Peripherals\DMP.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$\..\Src\Peripherals\i2c2_sensors.c</name>
         </file>
         <file>
+          <name>$PROJ_DIR$\..\Src\Peripherals\IIC.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$\..\Src\Peripherals\leds.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\Src\Peripherals\MPU6050.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\Src\Peripherals\tim2_motor.c</name>

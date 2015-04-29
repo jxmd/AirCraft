@@ -9,7 +9,7 @@ TriggerName=main
 LimitSize=0
 ByteLimit=50
 [DebugChecksum]
-Checksum=-1481048109
+Checksum=388943913
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -52,6 +52,12 @@ Sort=4 0
 [array_types]
 Fmt0=uint8_t[32]	1	0
 Fmt1=uint8_t[48]	4	0
+Fmt2=uint8_t[64]	4	0
+Fmt3=unsigned char[32]	4	0
+[watch_formats]
+Fmt0={W}1:xgOffset	4	0
+Fmt1={W}1:ygOffset	4	0
+Fmt2={W}1:zgOffset	4	0
 [Trace2]
 Enabled=0
 ShowSource=0
@@ -85,9 +91,6 @@ Count=0
 LoggingEnabled=_ 1
 LogFile=_ "$PROJ_DIR$\LogFile1.log"
 Category=_ 0
-[TermIOLog]
-LoggingEnabled=_ 0
-LogFile=_ ""
 [Aliases]
 Count=0
 SuppressDialog=0
@@ -99,3 +102,6 @@ Mode=3
 Graph=0
 Symbiont=0
 Exclusions=
+[TermIOLog]
+LoggingEnabled=_ 0
+LogFile=_ ""

@@ -9,10 +9,10 @@ uint8_t Lock = 0;
 Expect expect={0,0,0,0};
 struct pid roll,pitch,yaw,gyro_pitch,gyro_yaw,gyro_roll;
 /****************************角度PID参数设置***********************************/
-#define PID_ROLL_P 2.0
+#define PID_ROLL_P 0
 #define PID_ROLL_I 0
 #define PID_ROLL_D 0
-#define PID_PITCH_P 2.0
+#define PID_PITCH_P 0
 #define PID_PITCH_I 0
 #define PID_PITCH_D 0
 #define PID_YAW_P 0
@@ -22,10 +22,10 @@ struct pid roll={PID_ROLL_P,PID_ROLL_I,PID_ROLL_D,0,0};
 struct pid pitch={PID_PITCH_P,PID_PITCH_I,PID_PITCH_D,0,0};
 struct pid yaw={PID_YAW_P,PID_YAW_I,PID_YAW_D,0,0};
 /****************************角速度PID参数设置*********************************/
-#define GYRO_ROLL_P 1.4
+#define GYRO_ROLL_P 2
 #define GYRO_ROLL_I 0
 #define GYRO_ROLL_D 0
-#define GYRO_PITCH_P 1.4
+#define GYRO_PITCH_P 0
 #define GYRO_PITCH_I 0
 #define GYRO_PITCH_D 0
 #define GYRO_YAW_P 0
@@ -46,8 +46,8 @@ void Control_Angle(EulerAngle *pAngE,Expect *expect)
     float roll_expect = expect->Roll_expect;
     float yaw_expect = expect->Yaw_expect;
     int16_t  yaw1 	 = (int16_t)(toDeg(pAngE->Yaw));
-    int16_t  pitch1      = (int16_t)(toDeg(pAngE->Roll));
-    int16_t  roll1	 = (int16_t)(toDeg(pAngE->Pitch));
+    int16_t  pitch1      = (int16_t)(toDeg(pAngE->Pitch));
+    int16_t  roll1	 = (int16_t)(toDeg(pAngE->Roll));
     //printf("yaw1=%d   pitch1=%d  roll1=%d\r\n",yaw1,pitch1,roll1);
 //////////////////////////////////////////////////////////////////
 //          以下为角度环
@@ -193,9 +193,9 @@ void Control_Gyro(float* pGyr,EulerAngle *pAngE)
 //        throttle2 = (int16_t)(temp + gyro_pitch.output - gyro_roll.output - gyro_yaw.output);
 //        throttle3 = (int16_t)(temp - gyro_pitch.output - gyro_roll.output + gyro_yaw.output);
 //        throttle4 = (int16_t)(temp - gyro_pitch.output + gyro_roll.output - gyro_yaw.output);
-		throttle1 = (int16_t)(temp - gyro_pitch.output + gyro_roll.output - gyro_yaw.output);
+		throttle1 = (int16_t)(temp + gyro_pitch.output - gyro_roll.output - gyro_yaw.output);
         throttle2 = (int16_t)(temp + gyro_pitch.output + gyro_roll.output + gyro_yaw.output);
-        throttle3 = (int16_t)(temp + gyro_pitch.output - gyro_roll.output - gyro_yaw.output);
+        throttle3 = (int16_t)(temp - gyro_pitch.output + gyro_roll.output - gyro_yaw.output);
 		throttle4 = (int16_t)(temp - gyro_pitch.output - gyro_roll.output + gyro_yaw.output);
     }
     else

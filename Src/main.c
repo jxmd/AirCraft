@@ -46,6 +46,11 @@
 #include "usart3_ble.h"
 #include "usart1_dbg.h"
 #include <stdio.h>
+
+#include "math.h"
+#include "DataScope_DP.h"
+#include "algorithm_ahrs.h"
+#include "extern_variable.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -78,6 +83,15 @@ PUTCHAR_PROTOTYPE
   return ch;
 }
 extern PUTCHAR_PROTOTYPE;
+
+unsigned long sensor_timestamp;
+short gyro[3], accel[3], sensors;
+unsigned char more;
+long quat[4];
+
+#define q30  1073741824.0f
+float q0=1.0f,q1=0.0f,q2=0.0f,q3=0.0f;
+float Yaw,Roll,Pitch;
 /* USER CODE END 0 */
 
 int main(void)
@@ -108,6 +122,27 @@ int main(void)
 
   BLE_Init();
   printf("Peripherals init OK!\r\n");
+
+  MPU6050_DMP_Initialize();     //初始化DMP引擎
+  while(1)
+  {
+	DMP_Routing();	        //DMP 线程  所有的数据都在这里更新
+	DMP_getYawPitchRoll();  //读取 姿态角
+	{
+	  uint8_t Send_Count = 0, i =0;
+	  DataScope_Get_Channel_Data( Q_ANGLE.Pitch , 1 );
+	  DataScope_Get_Channel_Data( Q_ANGLE.Roll , 2 );
+	  DataScope_Get_Channel_Data( Q_ANGLE.Yaw , 3 );
+
+	  Send_Count = DataScope_Data_Generate(3);
+	  for(i = 0;i < Send_Count;i++)
+	  {
+		USART_DBG_Send(DataScope_OutPut_Buffer[i]);
+	  }
+	}
+	HAL_Delay(20);
+
+  }
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
@@ -115,7 +150,7 @@ int main(void)
 
   /* Start scheduler */
   osKernelStart(NULL, NULL);
-  
+
   /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
@@ -169,51 +204,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void prvGetRegistersFromStack( uint32_t *pulFaultStackAddress )
-{
-/* These are volatile to try and prevent the compiler/linker optimising them
-away as the variables never actually get used.  If the debugger won't show the
-values of the variables, make them global my moving their declaration outside
-of this function. */
-volatile uint32_t r0;
-volatile uint32_t r1;
-volatile uint32_t r2;
-volatile uint32_t r3;
-volatile uint32_t r12;
-volatile uint32_t lr; /* Link register. */
-volatile uint32_t pc; /* Program counter. */
-volatile uint32_t psr;/* Program status register. */
-
-    r0 = pulFaultStackAddress[ 0 ];
-    r1 = pulFaultStackAddress[ 1 ];
-    r2 = pulFaultStackAddress[ 2 ];
-    r3 = pulFaultStackAddress[ 3 ];
-
-    r12 = pulFaultStackAddress[ 4 ];
-    lr = pulFaultStackAddress[ 5 ];
-    pc = pulFaultStackAddress[ 6 ];
-    psr = pulFaultStackAddress[ 7 ];
-
-    /* When the following line is hit, the variables contain the register values. */
-    for( ;; );
-}
-
-/* The fault handler implementation calls a function called
-prvGetRegistersFromStack(). */
-static void HardFault_Handler(void)
-{
-    __asm volatile
-    (
-        " tst lr, #4                                                \n"
-        " ite eq                                                    \n"
-        " mrseq r0, msp                                             \n"
-        " mrsne r0, psp                                             \n"
-        " ldr r1, [r0, #24]                                         \n"
-        " ldr r2, handler2_address_const                            \n"
-        " bx r2                                                     \n"
-        " handler2_address_const: .word prvGetRegistersFromStack    \n"
-    );
-}
 /* USER CODE END 4 */
 
 #ifdef USE_FULL_ASSERT
@@ -239,10 +229,10 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 /**
   * @}
-  */ 
+  */
 
 /**
   * @}
-*/ 
+*/
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
