@@ -518,7 +518,7 @@ void StartSensorTask(void const * argument)
 	  uint8_t Send_Count = 0, i =0;
 	  LED_RedOn();
 	  AHRS_Update(Gyr, Acc, Mag, &AngE);
-#if 1
+#if 0
 #if 1
 	  DataScope_Get_Channel_Data( Acc[0], 1 );
 	  DataScope_Get_Channel_Data( Acc[1], 2 );
@@ -566,12 +566,12 @@ void StartSensorTask(void const * argument)
 		//			expect.Pitch_expect = gCommand_Packet.mRoll;
 		//			expect.Yaw_expect = gCommand_Packet.mYaw;
 
-//		expect.Roll_expect = 0;
-//		expect.Pitch_expect = 0;
-//		expect.Yaw_expect = AngE.Yaw;
-//		expect.Throttle_expect = gCommand_Packet.mThrust;//1500;
-//		Control_Angle(&AngE,&expect);
-//		Control_Gyro(Gyr,&AngE);
+		expect.Roll_expect = 0;
+		expect.Pitch_expect = 0;
+		expect.Yaw_expect = AngE.Yaw;
+		expect.Throttle_expect = gCommand_Packet.mThrust;//1500;
+		Control_Angle(&AngE,&expect);
+		Control_Gyro(Gyr,&AngE);
 #endif
 	  }
 	  else{
@@ -615,10 +615,8 @@ void StartBleRecvTask(void const * argument)
 	if(osSemaphoreWait(bleRecvOKSemaphore, 1000) == 0)
 	{
 	  if(BLE_GetPacket(&gCommand_Packet)){
-		Motor_Out(gCommand_Packet.mThrust,gCommand_Packet.mThrust,
-				  gCommand_Packet.mThrust,gCommand_Packet.mThrust);
-//		Motor_Out(gCommand_Packet.mThrust,0,
-//				  0,0);
+//		Motor_Out(gCommand_Packet.mThrust,gCommand_Packet.mThrust,
+//				  gCommand_Packet.mThrust,gCommand_Packet.mThrust);
 
 //		printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
 //			   gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);
