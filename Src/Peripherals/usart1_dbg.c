@@ -31,7 +31,7 @@ void USART_DBG_Init( void )
 }
 
 /**
-* @brief  Start Send byte.
+* @brief  Insert byte to Buffer.
 * @param  None
 * @retval None
 */
@@ -40,17 +40,30 @@ void USART_DBG_Send(uint8_t ch)
 {
   if(!USART1_IS_INITED) return;
   Uart_Put_Char(COM1, ch);
+}
 
-  if(STATE == 0){
-	uint16_t count = Uart_Get_TXSize_HW(COM1);
-	uint16_t i = 0;
-	if(count){
-	  for(i = 0;i < count;i++)
-	  {
-		arrayDMABuffer[i] = Uart_Get_Char_HW(COM1);
-	  }
-	  HAL_UART_Transmit_DMA(&huart1, arrayDMABuffer, count);
+/**
+* @brief  Start Send bytes.
+* @param  None
+* @retval None
+*/
+
+void USART_DBG_StartSend(void)
+{
+  if(!USART1_IS_INITED && STATE == 1) return;
+  uint16_t count = Uart_Get_TXSize_HW(COM1);
+  uint16_t i = 0;
+  if(count){
+	STATE = 1;
+	if(count >= TXBUFFER_SIZE) count = TXBUFFER_SIZE;
+	for(i = 0;i < count;i++)
+	{
+	  arrayDMABuffer[i] = Uart_Get_Char_HW(COM1);
 	}
+	HAL_UART_Transmit_DMA(&huart1, arrayDMABuffer, count);
+  }
+  else{
+	STATE = 0;
   }
 }
 
@@ -59,6 +72,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
   uint16_t count = Uart_Get_TXSize_HW(COM1);
   uint16_t i = 0;
   if(count){
+	STATE = 1;
+	if(count >= TXBUFFER_SIZE) count = TXBUFFER_SIZE;
 	for(i = 0;i < count;i++)
 	{
 	  arrayDMABuffer[i] = Uart_Get_Char_HW(COM1);

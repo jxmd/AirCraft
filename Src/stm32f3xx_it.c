@@ -41,6 +41,7 @@
 #include "stdio.h"
 #include "leds.h"
 #include "usart.h"
+#include "usart1_dbg.h"
 #include "usart_pingpong.h"
 #include "my_free_rtos.h"
 /* USER CODE END 0 */
@@ -67,6 +68,7 @@ void SysTick_Handler(void)
   if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
     xPortSysTickHandler();
   }
+  USART_DBG_StartSend();
 }
 
 /******************************************************************************/
