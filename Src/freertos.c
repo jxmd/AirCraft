@@ -50,6 +50,9 @@
 #include "pid.h"
 #include "usart1_dbg.h"
 #include "DataScope_DP.h"
+#include "extern_variable.h"
+#include "MPU6050.h"
+#include "DMP.h"
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -234,7 +237,7 @@ void StartDefaultTask(void const * argument)
 void getSensorDataTimerCallback(void const * argument)
 {
   /* USER CODE BEGIN getSensorDataTimerCallback */
-
+#if 0
 #define MoveAveSize 8
   static float Acc_FIFO[3][MoveAveSize] = {0};
   static float Gyr_FIFO[3][MoveAveSize] = {0};
@@ -245,6 +248,7 @@ void getSensorDataTimerCallback(void const * argument)
   static uint8_t cycle = 0;
 //  printf("%s\r\n", __func__);
 LED_BlueOn();
+#endif
   StartReadSensors(Gyr,
 						Acc,
 #ifdef USE_MAGNETOMETER
@@ -261,6 +265,7 @@ LED_BlueOn();
 						  );
   if(osSemaphoreWait(sensorOKSemaphore, 100) != 0)
 	return;
+#if 0
   LED_BlueOff();
 
 //  printf("Gyr[X]:%7.2f\tGyr[Y]:%7.2f\tGyr[Z]:%7.2f\r\n", Gyr[0], Gyr[1], Gyr[2]);
@@ -468,6 +473,7 @@ LED_BlueOn();
 
 	break;
   }
+#endif
 
   /* USER CODE END getSensorDataTimerCallback */
 }
@@ -477,6 +483,13 @@ void SensorsReadOK()
 {
   osSemaphoreRelease(sensorOKSemaphore);
 }
+volatile uint8_t MPU6050ReadIsOK = 0;
+void MPU6050ReadOK()
+{
+//  osSemaphoreRelease(sensorSemaphore);
+  MPU6050ReadIsOK = 1;
+}
+
 void StartSensorTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
@@ -514,7 +527,32 @@ void StartSensorTask(void const * argument)
   for(;;)
   {
 
-	if(osSemaphoreWait(sensorSemaphore, 100) == 0){
+//	if(osSemaphoreWait(sensorSemaphore, 100) == 0){
+	if(MPU6050ReadIsOK){
+	  MPU6050ReadIsOK = 0;
+	  DMP_Routing();	        //DMP 线程  所有的数据都在这里更新
+	  DMP_getYawPitchRoll();  //读取 姿态角
+	  {
+		uint8_t Send_Count = 0, i =0;
+		DataScope_Get_Channel_Data( Q_ANGLE.Pitch , 1 );
+		DataScope_Get_Channel_Data( Q_ANGLE.Roll , 2 );
+		DataScope_Get_Channel_Data( Q_ANGLE.Yaw , 3 );
+		DataScope_Get_Channel_Data( DMP_DATA.dmp_accx , 4 );
+		DataScope_Get_Channel_Data( DMP_DATA.dmp_accy , 5 );
+		DataScope_Get_Channel_Data( DMP_DATA.dmp_accz , 6 );
+		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyrox , 7 );
+		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroy , 8 );
+		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroz , 9 );
+
+
+		Send_Count = DataScope_Data_Generate(9);
+		for(i = 0;i < Send_Count;i++)
+		{
+		  USART_DBG_Send(DataScope_OutPut_Buffer[i]);
+		}
+	  }
+
+#if 0
 	  uint8_t Send_Count = 0, i =0;
 	  LED_RedOn();
 	  AHRS_Update(Gyr, Acc, Mag, &AngE);
@@ -582,9 +620,11 @@ void StartSensorTask(void const * argument)
 #endif
 	  //EullerReport(&AngE);
 	  LED_RedOff();
+#endif
 	}
 	else{
 	}
+	osDelay(1);
 
   }
   /* USER CODE END StartDefaultTask */
@@ -615,8 +655,8 @@ void StartBleRecvTask(void const * argument)
 	if(osSemaphoreWait(bleRecvOKSemaphore, 1000) == 0)
 	{
 	  if(BLE_GetPacket(&gCommand_Packet)){
-//		Motor_Out(gCommand_Packet.mThrust,gCommand_Packet.mThrust,
-//				  gCommand_Packet.mThrust,gCommand_Packet.mThrust);
+		Motor_Out(gCommand_Packet.mThrust,gCommand_Packet.mThrust,
+				  gCommand_Packet.mThrust,gCommand_Packet.mThrust);
 
 //		printf("mRoll:%f mPitch:%f mYaw:%f mThrust:%u\r\n",
 //			   gCommand_Packet.mRoll, gCommand_Packet.mPitch, gCommand_Packet.mYaw, gCommand_Packet.mThrust);

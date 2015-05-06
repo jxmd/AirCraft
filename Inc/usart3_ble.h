@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 /* Exported types ------------------------------------------------------------*/
 struct _Command_Packet{
   float mRoll;

@@ -51,6 +51,9 @@
 #include "DataScope_DP.h"
 #include "algorithm_ahrs.h"
 #include "extern_variable.h"
+#include "MPU6050.h"
+#include "DMP.h"
+#include "my_free_rtos.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -83,6 +86,15 @@ PUTCHAR_PROTOTYPE
   return ch;
 }
 extern PUTCHAR_PROTOTYPE;
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if(GPIO_Pin == GPIO_PIN_12)
+  {
+//	gyro_data_ready_cb();
+	MPU6050ReadOK();
+  }
+}
 
 unsigned long sensor_timestamp;
 short gyro[3], accel[3], sensors;
@@ -121,28 +133,11 @@ int main(void)
   USART_DBG_Init();
 
   BLE_Init();
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
   printf("Peripherals init OK!\r\n");
 
   MPU6050_DMP_Initialize();     //初始化DMP引擎
-  while(1)
-  {
-	DMP_Routing();	        //DMP 线程  所有的数据都在这里更新
-	DMP_getYawPitchRoll();  //读取 姿态角
-	{
-	  uint8_t Send_Count = 0, i =0;
-	  DataScope_Get_Channel_Data( Q_ANGLE.Pitch , 1 );
-	  DataScope_Get_Channel_Data( Q_ANGLE.Roll , 2 );
-	  DataScope_Get_Channel_Data( Q_ANGLE.Yaw , 3 );
-
-	  Send_Count = DataScope_Data_Generate(3);
-	  for(i = 0;i < Send_Count;i++)
-	  {
-		USART_DBG_Send(DataScope_OutPut_Buffer[i]);
-	  }
-	}
-	HAL_Delay(20);
-
-  }
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
