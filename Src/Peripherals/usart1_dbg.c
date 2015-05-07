@@ -40,6 +40,22 @@ void USART_DBG_Send(uint8_t ch)
 {
   if(!USART1_IS_INITED) return;
   Uart_Put_Char(COM1, ch);
+
+  //如果在一个tick时间内，没有启动发送且发送buffer达到总buffer大小的1/4，
+  //则立即启动发送，这样可以提高串口发送的实时性，提高DMA通道的利用率
+  if(STATE != 1){
+	uint16_t count = Uart_Get_TXSize_HW(COM1);
+	if(count >= (TXBUFFER_SIZE / 4)){
+	  uint16_t i = 0;
+	  STATE = 1;
+	  if(count >= TXBUFFER_SIZE) count = TXBUFFER_SIZE;
+	  for(i = 0;i < count;i++)
+	  {
+		arrayDMABuffer[i] = Uart_Get_Char_HW(COM1);
+	  }
+	  HAL_UART_Transmit_DMA(&huart1, arrayDMABuffer, count);
+	}
+  }
 }
 
 /**
