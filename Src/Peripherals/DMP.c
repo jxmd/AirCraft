@@ -524,9 +524,9 @@ void DMP_Covert_Data(void){
 
 	// 注意，这里的计算原来是错误的，但因为 PID参数原因，暂时不改
 	//DMP_DATA.GYROx 即为直接的角度deg; 而非AD。
-	DMP_DATA.dmp_gyrox = ((float)DMP_DATA.GYROx)/16.4f;	    //TOBE FIXED GYROx*M_PI_F/180.0f convert to rad/s
-	DMP_DATA.dmp_gyroy = ((float)DMP_DATA.GYROy)/16.4f;
-	DMP_DATA.dmp_gyroz = ((float)DMP_DATA.GYROz)/16.4f;
+	DMP_DATA.dmp_gyrox = ((float)DMP_DATA.GYROx);	    //TOBE FIXED GYROx*M_PI_F/180.0f convert to rad/s
+	DMP_DATA.dmp_gyroy = ((float)DMP_DATA.GYROy);
+	DMP_DATA.dmp_gyroz = ((float)DMP_DATA.GYROz);
 	//acc sensitivity to +/-    4 g
 	DMP_DATA.dmp_accx = (((float)DMP_DATA.ACCx)/DMP_ACC_SCALE)*ONE_G;	//加速度 转成单位： m/S^2
 	DMP_DATA.dmp_accy = (((float)DMP_DATA.ACCy)/DMP_ACC_SCALE)*ONE_G;

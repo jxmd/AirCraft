@@ -529,23 +529,38 @@ void StartSensorTask(void const * argument)
 
 //	if(osSemaphoreWait(sensorSemaphore, 100) == 0){
 	if(MPU6050ReadIsOK){
+//	  int16_t data[3] = {0};
 	  MPU6050ReadIsOK = 0;
 	  DMP_Routing();	        //DMP 线程  所有的数据都在这里更新
 	  DMP_getYawPitchRoll();  //读取 姿态角
 	  {
+//		MPU6050GyroRead(data);
+//		  MPU6050AccRead(data);
 		uint8_t Send_Count = 0, i =0;
-		DataScope_Get_Channel_Data( Q_ANGLE.Pitch , 1 );
-		DataScope_Get_Channel_Data( Q_ANGLE.Roll , 2 );
-		DataScope_Get_Channel_Data( Q_ANGLE.Yaw , 3 );
-		DataScope_Get_Channel_Data( DMP_DATA.dmp_accx , 4 );
-		DataScope_Get_Channel_Data( DMP_DATA.dmp_accy , 5 );
-		DataScope_Get_Channel_Data( DMP_DATA.dmp_accz , 6 );
-		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyrox , 7 );
-		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroy , 8 );
-		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroz , 9 );
+//		DataScope_Get_Channel_Data( Acc[0] * 9.80665f, 1 );
+//		DataScope_Get_Channel_Data( Acc[1] * 9.80665f, 2 );
+//		DataScope_Get_Channel_Data( Acc[2] * 9.80665f, 3 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_accx , 4 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_accy , 5 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_accz , 6 );
+		DataScope_Get_Channel_Data( Gyr[0], 1 );
+		DataScope_Get_Channel_Data( Gyr[1], 2 );
+		DataScope_Get_Channel_Data( Gyr[2], 3 );
+//		DataScope_Get_Channel_Data( data[0] / 16.4f, 1 );
+//		DataScope_Get_Channel_Data( data[1] / 16.4f, 2 );
+//		DataScope_Get_Channel_Data( data[2] / 16.4f, 3 );
+		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyrox, 4 );
+		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroy, 5 );
+		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroz, 6 );
+//		DataScope_Get_Channel_Data( data[0] / 16.4f, 4 );
+//		DataScope_Get_Channel_Data( data[1] / 16.4f, 5 );
+//		DataScope_Get_Channel_Data( data[2] / 16.4f, 6 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyrox, 7 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroy, 8 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroz, 9 );
 
 
-		Send_Count = DataScope_Data_Generate(9);
+		Send_Count = DataScope_Data_Generate(6);
 		for(i = 0;i < Send_Count;i++)
 		{
 		  USART_DBG_Send(DataScope_OutPut_Buffer[i]);
