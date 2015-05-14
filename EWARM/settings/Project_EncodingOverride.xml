@@ -2,6 +2,10 @@
 
 <userOverrides>
   <override>
+    <path>C:\Users\lj\Desktop\Aircopter_V1_Demo_Poj\Src\freertos.c</path>
+    <encoding>UTF-8</encoding>
+  </override>
+  <override>
     <path>D:\project\Aircopter_V1_Demo\Aircopter_V1_Demo_Poj\Inc\DataScope_DP.h</path>
     <encoding>UTF-8</encoding>
   </override>
@@ -19,6 +23,10 @@
   </override>
   <override>
     <path>D:\project\Aircopter_V1_Demo\Aircopter_V1_Demo_Poj\Src\Peripherals\mpu6050.c</path>
+    <encoding>UTF-8</encoding>
+  </override>
+  <override>
+    <path>E:\daima\Aircopter_V1_Demo_Poj\Src\freertos.c</path>
     <encoding>UTF-8</encoding>
   </override>
 </userOverrides>

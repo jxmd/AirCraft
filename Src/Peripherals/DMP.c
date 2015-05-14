@@ -253,7 +253,7 @@ uint8_t min(uint8_t x ,uint8_t y){
 uint8_t MPU6050_DMP_Initialize(void)
 {
 	uint8_t dmpUpdate[16], j;
-  uint16_t pos = 0;
+        uint16_t pos = 0;
 	uint8_t fifoCount;
 	uint8_t fifoBuffer[128];
 	int8_t xgOffset	, ygOffset , zgOffset;
@@ -536,17 +536,21 @@ void DMP_Covert_Data(void){
 	qtemp[1] = (float)DMP_DATA.qx;
 	qtemp[2] = (float)DMP_DATA.qy;
 	qtemp[3] = (float)DMP_DATA.qz;
+        
+        //qtemp[2] = -dmpinvSqrt(1-qtemp[0]*qtemp[0])*qtemp[2]*qtemp[0];
+        
+        
 	// 四元数归一化
 	norm = dmpinvSqrt(qtemp[0]*qtemp[0] + qtemp[1]*qtemp[1] + qtemp[2]*qtemp[2] + qtemp[3]*qtemp[3]);
-	q[0] = qtemp[0] * norm;
-	q[1] = qtemp[1] * norm;
-	q[2] = qtemp[2] * norm;
-	q[3] = qtemp[3] * norm;
+	q[1] = -qtemp[0] * norm;
+	q[0] = -qtemp[1] * norm;
+	q[3] = -qtemp[2] * norm;
+	q[2] = -qtemp[3] * norm;
 
-	DMP_DATA.dmp_roll = (atan2(2.0*(q[0]*q[1] + q[2]*q[3]),
+	DMP_DATA.dmp_pitch = (atan2(2.0*(q[0]*q[1] + q[2]*q[3]),
 	                       1 - 2.0*(q[1]*q[1] + q[2]*q[2])))* 180/M_PI;
 	 // we let safe_asin() handle the singularities near 90/-90 in pitch
-	DMP_DATA.dmp_pitch = dmpsafe_asin(2.0*(q[0]*q[2] - q[3]*q[1]))* 180/M_PI;
+	DMP_DATA.dmp_roll = - dmpsafe_asin(2.0*(q[0]*q[2] - q[3]*q[1]))* 180/M_PI;
 	//注意：此处计算反了，非右手系。
 	DMP_DATA.dmp_yaw = -atan2(2.0*(q[0]*q[3] + q[1]*q[2]),
 	                     1 - 2.0*(q[2]*q[2] + q[3]*q[3]))* 180/M_PI;

@@ -720,7 +720,7 @@
         </option>
         <option>
           <name>IlinkIcfFile</name>
-          <state>D:\project\Aircopter_V1_Demo\Aircopter_V1_Demo_Poj\EWARM\Aircopter_V1_Demo_Poj.icf</state>
+          <state>$PROJ_DIR$\..\EWARM\Aircopter_V1_Demo_Poj.icf</state>
         </option>
         <option>
           <name>IlinkIcfFileSlave</name>

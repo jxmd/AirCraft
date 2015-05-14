@@ -124,8 +124,10 @@ typedef struct {
 #define toDeg( Math_R )	    ((float)(Math_R)*57.2957795f)
 
 #define 	PA_INITIAL 		0.001
-#define 	RA_INITIAL 		0.8
-#define 	QA_INITIAL 		0.00002
+#define 	RA_INITIAL_X 		0.8
+#define 	RA_INITIAL_Y 		1
+#define 	RA_INITIAL_Z 		0.8
+#define 	QA_INITIAL 		0.000008
 
 #define 	PM_INITIAL 		0.001
 #define 	RM_INITIAL 		0.02

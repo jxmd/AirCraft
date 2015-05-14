@@ -1,18 +1,20 @@
 #include "pid.h"
 #include "arm_math.h"
+#include "DataScope_DP.h"
 #include <stdio.h>
 #define angle_max       10.0f
 #define angle_integral_max  1000.0f
-#define Radian_to_Angle 57.2957795f
-#define DertT 0.02
+#define DertT 0.02                ////////////////////////
 uint8_t Lock = 0;
 Expect expect={0,0,0,0};
+ACCSOURCE accsource={0,0,0,0,0,0};
+Gyo gyo={0,0,0};
 struct pid roll,pitch,yaw,gyro_pitch,gyro_yaw,gyro_roll;
 /****************************角度PID参数设置***********************************/
-#define PID_ROLL_P 0
+#define PID_ROLL_P 10
 #define PID_ROLL_I 0
 #define PID_ROLL_D 0
-#define PID_PITCH_P 0
+#define PID_PITCH_P 10
 #define PID_PITCH_I 0
 #define PID_PITCH_D 0
 #define PID_YAW_P 0
@@ -22,12 +24,12 @@ struct pid roll={PID_ROLL_P,PID_ROLL_I,PID_ROLL_D,0,0};
 struct pid pitch={PID_PITCH_P,PID_PITCH_I,PID_PITCH_D,0,0};
 struct pid yaw={PID_YAW_P,PID_YAW_I,PID_YAW_D,0,0};
 /****************************角速度PID参数设置*********************************/
-#define GYRO_ROLL_P 2
+#define GYRO_ROLL_P 4.5
 #define GYRO_ROLL_I 0
-#define GYRO_ROLL_D 0
-#define GYRO_PITCH_P 0
+#define GYRO_ROLL_D 20
+#define GYRO_PITCH_P 4.5
 #define GYRO_PITCH_I 0
-#define GYRO_PITCH_D 0
+#define GYRO_PITCH_D 20
 #define GYRO_YAW_P 0
 #define GYRO_YAW_I 0
 #define GYRO_YAW_D 0
@@ -45,9 +47,9 @@ void Control_Angle(EulerAngle *pAngE,Expect *expect)
     float pitch_expect = expect->Pitch_expect;
     float roll_expect = expect->Roll_expect;
     float yaw_expect = expect->Yaw_expect;
-    int16_t  yaw1 	 = (int16_t)(toDeg(pAngE->Yaw));
-    int16_t  pitch1      = (int16_t)(toDeg(pAngE->Pitch));
-    int16_t  roll1	 = (int16_t)(toDeg(pAngE->Roll));
+    int16_t  yaw1 	 = (int16_t)(pAngE->Yaw);
+    int16_t  pitch1      = (int16_t)(pAngE->Pitch);
+    int16_t  roll1	 = (int16_t)(pAngE->Roll);
     //printf("yaw1=%d   pitch1=%d  roll1=%d\r\n",yaw1,pitch1,roll1);
 //////////////////////////////////////////////////////////////////
 //          以下为角度环
@@ -104,7 +106,7 @@ void Control_Angle(EulerAngle *pAngE,Expect *expect)
 函数原型：   void Control_Gyro(struct _SI_float *gyro,struct _Rc *rc,uint8_t Lock)
 功    能： PID控制器(内环)
 *******************************************************************************/
-void Control_Gyro(float* pGyr,EulerAngle *pAngE)
+void Control_Gyro(Gyo *gyo,EulerAngle *pAngE)
 {
     static struct _out_angle control_gyro;
     static struct _out_angle last_gyro;
@@ -115,11 +117,11 @@ void Control_Gyro(float* pGyr,EulerAngle *pAngE)
 /*
     if(rc->YAW>1400 && rc->YAW<1600)
         rc->YAW=1500;
-*/
-    control_gyro.pitch =  pitch.output - (pGyr[0]) * Radian_to_Angle * DertT;
-    control_gyro.roll = roll.output - (pGyr[1]) * Radian_to_Angle * DertT;
+*/ 
+    control_gyro.pitch =  gyo->Pitch_gy + pitch.output;
+    control_gyro.roll = gyo->Roll_gy + roll.output;
     //control_gyro.yaw   = yaw.output - gyro[1]*Radian_to_Angle;
-    control_gyro.yaw   =  0 - (pGyr[2]) * Radian_to_Angle * DertT;
+    control_gyro.yaw   = gyo->Yaw_gy - 0;
 
 
     //printf("%f,%f \r\n",gyo->Pitch_gy,gyo->Roll_gy);
@@ -184,55 +186,55 @@ void Control_Gyro(float* pGyr,EulerAngle *pAngE)
 //////////////////////////////////////////////////////////////////
     if(Lock==0)
     {
-//        float temp = (expect.Throttle_expect/arm_cos_f32(pAngE->Pitch))/arm_cos_f32(pAngE->Roll);
-	  float temp = expect.Throttle_expect;
+        //float temp = (1100/arm_cos_f32(toRad(pAngE->Pitch))/arm_cos_f32(toRad(pAngE->Roll)));
+	  float temp = 1100;
         //printf("gyro_pitch:%f gyro_roll:%f  gyro_yaw:%f\r\n",
         //       gyro_pitch.output, gyro_roll.output, gyro_yaw.output);
         //printf("%f\r\n",temp);
-//        throttle1 = (int16_t)(temp + gyro_pitch.output + gyro_roll.output + gyro_yaw.output);
-//        throttle2 = (int16_t)(temp + gyro_pitch.output - gyro_roll.output - gyro_yaw.output);
-//        throttle3 = (int16_t)(temp - gyro_pitch.output - gyro_roll.output + gyro_yaw.output);
-//        throttle4 = (int16_t)(temp - gyro_pitch.output + gyro_roll.output - gyro_yaw.output);
-		throttle1 = (int16_t)(temp + gyro_pitch.output - gyro_roll.output - gyro_yaw.output);
-        throttle2 = (int16_t)(temp + gyro_pitch.output + gyro_roll.output + gyro_yaw.output);
-        throttle3 = (int16_t)(temp - gyro_pitch.output + gyro_roll.output - gyro_yaw.output);
-		throttle4 = (int16_t)(temp - gyro_pitch.output - gyro_roll.output + gyro_yaw.output);
+        throttle1 = (int16_t)(temp + gyro_pitch.output + gyro_roll.output + gyro_yaw.output);
+        throttle2 = (int16_t)(temp + gyro_pitch.output - gyro_roll.output - gyro_yaw.output);
+        throttle3 = (int16_t)(temp - gyro_pitch.output - gyro_roll.output + gyro_yaw.output);
+        throttle4 = (int16_t)(temp - gyro_pitch.output + gyro_roll.output - gyro_yaw.output);
+//        throttle1 = (int16_t)(temp + gyro_pitch.output - gyro_roll.output - gyro_yaw.output);
+//        throttle2 = (int16_t)(temp + gyro_pitch.output + gyro_roll.output + gyro_yaw.output);
+//        throttle3 = (int16_t)(temp - gyro_pitch.output + gyro_roll.output - gyro_yaw.output);
+//        throttle4 = (int16_t)(temp - gyro_pitch.output - gyro_roll.output + gyro_yaw.output);
     }
     else
     {
-        throttle1=0;
-        throttle2=0;
-        throttle3=0;
-        throttle4=0;
+        throttle1=1100;
+        throttle2=1100;
+        throttle3=1100;
+        throttle4=1100;
     }
     Motor_Out(throttle1,throttle2,throttle3,throttle4);
-#if 1
-	{
+#if 0
+	
 	  uint8_t Send_Count = 0, i =0;
-	  float Fthrottle1 = throttle1;
-	  float Fthrottle2 = throttle2;
-	  float Fthrottle3 = throttle3;
-	  float Fthrottle4 = throttle4;
+//	  float Fthrottle1 = throttle1;
+//	  float Fthrottle2 = throttle2;
+//	  float Fthrottle3 = throttle3;
+//	  float Fthrottle4 = throttle4;
 //	  DataScope_Get_Channel_Data( Fthrottle1, 1 );
 //	  DataScope_Get_Channel_Data( Fthrottle2, 2 );
 //	  DataScope_Get_Channel_Data( Fthrottle3, 3 );
 //	  DataScope_Get_Channel_Data( Fthrottle4, 4 );
-	  DataScope_Get_Channel_Data( toDeg(pAngE->Roll), 1 );
-	  DataScope_Get_Channel_Data( toDeg(pAngE->Pitch), 2 );
+	  DataScope_Get_Channel_Data( (pAngE->Roll), 1 );
+	  DataScope_Get_Channel_Data( (pAngE->Pitch), 2 );
 //	  DataScope_Get_Channel_Data( toDeg(pAngE->Yaw), 7 );
-	  DataScope_Get_Channel_Data( gyro_pitch.output, 3 );
-	  DataScope_Get_Channel_Data( gyro_roll.output, 4 );
+//	  DataScope_Get_Channel_Data( gyro_pitch.output, 3 );
+//	  DataScope_Get_Channel_Data( gyro_roll.output, 4 );
 //	  DataScope_Get_Channel_Data( gyro_yaw.output, 7 );
-	  DataScope_Get_Channel_Data( pitch.output, 5 );
-	  DataScope_Get_Channel_Data( roll.output, 6 );
+//	  DataScope_Get_Channel_Data( pitch.output, 5 );
+//	  DataScope_Get_Channel_Data( roll.output, 6 );
 //	  DataScope_Get_Channel_Data( yaw.output, 10 );
 
 //	  printf("%f %f %f %f\r\n", Fthrottle1, Fthrottle2, Fthrottle3, Fthrottle4);
-	  Send_Count = DataScope_Data_Generate(6);
+	  Send_Count = DataScope_Data_Generate(2);
 	  for(i = 0;i < Send_Count;i++)
 	  {
 		USART_DBG_Send(DataScope_OutPut_Buffer[i]);
 	  }
-	}
+	
 #endif
 }

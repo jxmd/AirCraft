@@ -494,7 +494,7 @@ void StartSensorTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   printf("%s\r\n", __func__);
-
+  float Normalize,accx,accy,accz;
 //  Motor_Out(MOTOR_SPEED_MAX,MOTOR_SPEED_MAX,MOTOR_SPEED_MAX,MOTOR_SPEED_MAX);
 //  osDelay(2500);
 //  Motor_Out(MOTOR_SPEED_MIN,MOTOR_SPEED_MIN,MOTOR_SPEED_MIN,MOTOR_SPEED_MIN);
@@ -518,47 +518,69 @@ void StartSensorTask(void const * argument)
   Motor_Out(0,0,0,MOTOR_SPEED_MIN + 300);
   osDelay(50);
   Motor_Out(0,0,0,0);
-  osTimerStart(getSensorDataTimerHandle, 1000 / 500);
+ // osTimerStart(getSensorDataTimerHandle, 1000 / 500);
 
 
-//  Motor_Out(1000,1000,1000,1000);
+ // Motor_Out(1100,1100,1100,1100);
 
   /* Infinite loop */
+ 
   for(;;)
   {
-
+        static int num = 0;
 //	if(osSemaphoreWait(sensorSemaphore, 100) == 0){
 	if(MPU6050ReadIsOK){
 //	  int16_t data[3] = {0};
 	  MPU6050ReadIsOK = 0;
 	  DMP_Routing();	        //DMP 线程  所有的数据都在这里更新
 	  DMP_getYawPitchRoll();  //读取 姿态角
+          if(num < 500 )
+            num++;
+          gyo.Pitch_gy = DMP_DATA.dmp_gyrox + 1 ;
+          gyo.Roll_gy = DMP_DATA.dmp_gyroy  ;
+          gyo.Yaw_gy = (-DMP_DATA.dmp_gyroz);
+          AngE.Pitch = DMP_DATA.dmp_pitch - 1.75-0.75;
+          AngE.Roll = DMP_DATA.dmp_roll + 1.25;
+          AngE.Yaw = DMP_DATA.dmp_yaw;
+          
+ //           MPU6050AccRead(data);
+       //   Normalize = invSqrtf(squa(data[0]) + squa(-data[1]) + squa(-data[2]));
+      //    accx = data[0]*Normalize;
+      //    accy = -data[1]*Normalize;
+      //    accz = -data[2]*Normalize;
+      //    accx = asinf(-accx);
+      //    accy = atan2f(accy,accz);
+      //    Acc[0] = data[0];
+       //   Acc[1] = -data[1];
+       //   Acc[2] = -data[2];
+          
+//         printf("%f,   %f,   %f \r\n",Gyr[0],Gyr[1],Gyr[2]);
 	  {
 //		MPU6050GyroRead(data);
-//		  MPU6050AccRead(data);
+//		MPU6050AccRead(data);
 		uint8_t Send_Count = 0, i =0;
-//		DataScope_Get_Channel_Data( Acc[0] * 9.80665f, 1 );
-//		DataScope_Get_Channel_Data( Acc[1] * 9.80665f, 2 );
-//		DataScope_Get_Channel_Data( Acc[2] * 9.80665f, 3 );
-//		DataScope_Get_Channel_Data( DMP_DATA.dmp_accx , 4 );
-//		DataScope_Get_Channel_Data( DMP_DATA.dmp_accy , 5 );
-//		DataScope_Get_Channel_Data( DMP_DATA.dmp_accz , 6 );
-		DataScope_Get_Channel_Data( Gyr[0], 1 );
-		DataScope_Get_Channel_Data( Gyr[1], 2 );
-		DataScope_Get_Channel_Data( Gyr[2], 3 );
+		DataScope_Get_Channel_Data( gyo.Pitch_gy, 1 );
+		DataScope_Get_Channel_Data( gyo.Roll_gy, 2 );
+		DataScope_Get_Channel_Data( gyo.Yaw_gy, 3 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_accx , 7 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_accy , 8 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_accz , 9 );
+		DataScope_Get_Channel_Data( AngE.Pitch, 4 );
+		DataScope_Get_Channel_Data( AngE.Roll, 5 );
+		DataScope_Get_Channel_Data( AngE.Yaw, 6 );
 //		DataScope_Get_Channel_Data( data[0] / 16.4f, 1 );
 //		DataScope_Get_Channel_Data( data[1] / 16.4f, 2 );
 //		DataScope_Get_Channel_Data( data[2] / 16.4f, 3 );
-		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyrox, 4 );
-		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroy, 5 );
-		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroz, 6 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyrox, 1 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroy, 2 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroz, 3 );
 //		DataScope_Get_Channel_Data( data[0] / 16.4f, 4 );
 //		DataScope_Get_Channel_Data( data[1] / 16.4f, 5 );
 //		DataScope_Get_Channel_Data( data[2] / 16.4f, 6 );
-//		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyrox, 7 );
-//		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroy, 8 );
-//		DataScope_Get_Channel_Data( DMP_DATA.dmp_gyroz, 9 );
-
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_pitch, 4 );              
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_roll, 5 );
+//		DataScope_Get_Channel_Data( DMP_DATA.dmp_yaw, 6 );
+//              DataScope_Get_Channel_Data( asinf(-accx)*57.2957795, 4 );
 
 		Send_Count = DataScope_Data_Generate(6);
 		for(i = 0;i < Send_Count;i++)
@@ -567,18 +589,19 @@ void StartSensorTask(void const * argument)
 		}
 	  }
 
-#if 0
+        
+#if 1
 	  uint8_t Send_Count = 0, i =0;
 	  LED_RedOn();
-	  AHRS_Update(Gyr, Acc, Mag, &AngE);
+//	  AHRS_Update(Gyr, Acc, Mag, &AngE);
 #if 0
-#if 1
+#if 0
 	  DataScope_Get_Channel_Data( Acc[0], 1 );
 	  DataScope_Get_Channel_Data( Acc[1], 2 );
 	  DataScope_Get_Channel_Data( Acc[2], 3 );
-	  DataScope_Get_Channel_Data( Gyr[0] , 4 );
-	  DataScope_Get_Channel_Data( Gyr[1] , 5 );
-	  DataScope_Get_Channel_Data( Gyr[2] , 6 );
+	  DataScope_Get_Channel_Data( Gyr[0], 4 );
+	  DataScope_Get_Channel_Data( Gyr[1], 5 );
+	  DataScope_Get_Channel_Data( Gyr[2], 6 );
 	  DataScope_Get_Channel_Data( toDeg(AngE.Pitch) , 7 );
 	  DataScope_Get_Channel_Data( toDeg(AngE.Roll) , 8 );
 	  DataScope_Get_Channel_Data( toDeg(AngE.Yaw) , 9 );
@@ -589,11 +612,16 @@ void StartSensorTask(void const * argument)
 		USART_DBG_Send(DataScope_OutPut_Buffer[i]);
 	  }
 #else
-	  DataScope_Get_Channel_Data( toDeg(AngE.Pitch) , 1 );
-	  DataScope_Get_Channel_Data( toDeg(AngE.Roll) , 2 );
-	  DataScope_Get_Channel_Data( toDeg(AngE.Yaw) , 3 );
-
-	  Send_Count = DataScope_Data_Generate(3);
+//	  DataScope_Get_Channel_Data( toDeg(AngE.Pitch) , 1 );
+//	  DataScope_Get_Channel_Data( toDeg(AngE.Roll) , 2 );
+//	  DataScope_Get_Channel_Data( toDeg(AngE.Yaw) , 3 );
+//          DataScope_Get_Channel_Data( accsource.ACCX * 57.29578, 4 );
+//	  DataScope_Get_Channel_Data( accsource.ACCY * 57.29578, 5 );
+          
+          DataScope_Get_Channel_Data( DMP_DATA.dmp_pitch, 1 );              
+	  DataScope_Get_Channel_Data( DMP_DATA.dmp_roll, 2 );
+	  DataScope_Get_Channel_Data( DMP_DATA.dmp_yaw, 3 );
+	  Send_Count = DataScope_Data_Generate(10);
 	  for(i = 0;i < Send_Count;i++)
 	  {
 		USART_DBG_Send(DataScope_OutPut_Buffer[i]);
@@ -604,7 +632,7 @@ void StartSensorTask(void const * argument)
 	  osSemaphoreRelease(sensorWorkSemaphore);
 
 #if 1
-	  if(BLE_CONNECTED){
+	  if(1){
 #if 0
 		//		  PID2_Process(toDeg(AngE.Pitch - AngE_Zero.Pitch) - gCommand_Packet.mRoll,
 		//					   toDeg(AngE.Roll - AngE_Zero.Roll) - gCommand_Packet.mPitch,
@@ -623,12 +651,15 @@ void StartSensorTask(void const * argument)
 		expect.Pitch_expect = 0;
 		expect.Yaw_expect = AngE.Yaw;
 		expect.Throttle_expect = gCommand_Packet.mThrust;//1500;
-		Control_Angle(&AngE,&expect);
-		Control_Gyro(Gyr,&AngE);
+                if(num >= 500)
+                {
+                  Control_Angle(&AngE,&expect);
+                  Control_Gyro(&gyo,&AngE);
+                }
 #endif
 	  }
 	  else{
-		Motor_Out(0,0,0,0);
+		Motor_Out(1100,1100,1100,1100);
 	  }
 //	  printf("+ AngE.Roll:%7f AngE.Pitch:%7f AngE.Yaw:%7f\r\n", AngE.Roll, AngE.Pitch, AngE.Yaw);
 

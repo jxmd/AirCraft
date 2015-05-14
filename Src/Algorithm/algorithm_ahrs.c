@@ -15,6 +15,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "arm_math.h"
 #include "algorithm_ahrs.h"
+#include "pid.h"
 
 #ifdef  USE_EKF_ALGORITHM
 #include "algorithm_kalman.h"
@@ -56,9 +57,9 @@ const float QA[16] = {QA_INITIAL,0		   ,0		  	,0,
 0		    ,0		   ,QA_INITIAL,0,
 0		    ,0		   ,0		  ,QA_INITIAL};
 
-float RA[9] = {RA_INITIAL,0,			0,
-0,			RA_INITIAL,	0,
-0,			0,			RA_INITIAL};
+float RA[9] = {RA_INITIAL_X,0,			0,
+0,			RA_INITIAL_Y,	0,
+0,			0,			RA_INITIAL_Z};
 
 
 #ifdef	USE_MAGNETOMETER
@@ -480,11 +481,24 @@ void AHRS_Update(float* pGyr, float* pAcc, float* pMag, EulerAngle* pAngE)
 	GyrY = pGyr[1];
 	GyrZ = pGyr[2];
   }
+  
+  gyo.Pitch_gy = GyrY;
+  gyo.Roll_gy = GyrX;
+  gyo.Yaw_gy = GyrZ;
+  
+ 
   /* Normalise the measurements of accelerometer */
   Normalize = invSqrtf(squa(pAcc[0]) + squa(pAcc[1]) + squa(pAcc[2]));
   AccX = pAcc[0]*Normalize;
   AccY = pAcc[1]*Normalize;
   AccZ = pAcc[2]*Normalize;
+  
+   accsource.ACCX = asinf(-AccX);
+   accsource.ACCY = atan2f(AccY,AccZ);
+  
+  
+  
+  
 #ifdef USE_MAGNETOMETER
   /* Normalise the measurements of magnetometer */
   Normalize = invSqrtf(squa(pMag[0]) + squa(pMag[1]) + squa(pMag[2]));

@@ -49,7 +49,7 @@
 #define ADDR_LSM330DLC_G    0xD4
 
 // address of ADDR_LSM330DLC_A: 00110000b
-#define ADDR_LSM330DLC_A    0x30
+#define ADDR_LSM330DLC_A    0x32
 
 // address of LIS3MDL: 00111000b
 #define ADDR_LIS3MDL    		0x38
